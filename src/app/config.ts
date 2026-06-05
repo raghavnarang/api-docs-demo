@@ -28,7 +28,7 @@ export interface AppConfig {
 }
 
 export const appConfig: AppConfig = {
-  dataSource: 'mock',
+  dataSource: 'local-json',
   authProvider: 'mock',
   sandbox: {
     defaultBaseUrl: 'https://pokeapi.co/api/v2',

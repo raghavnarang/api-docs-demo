@@ -1,16 +1,15 @@
+import type { OpenAPIV3 } from 'openapi-types'
+import type { ErrorRefEntry, SdkLink } from '../lib/data/types'
+
 /**
  * Single source of truth for registered APIs.
  *
- * To add an API: drop an `openapi.json` under `src/apis/<api-name>/` and add a
- * single entry to `API_REGISTRY` below. No component code should change — the
- * docs engine, sandbox, changelog, and status page all read from this registry.
+ * To add an API: drop an `openapi.json` under `src/apis/<api-name>/`, import it
+ * here, and add one entry to `API_REGISTRY`. Optionally colocate `docs.md`
+ * (import with `?raw`), an `errors.json`, and SDK links. No component code
+ * changes — the portal reads everything from this registry via the DAL's
+ * `local-json` adapter.
  */
-
-export interface SdkLink {
-  lang: string
-  install: string
-  repo: string
-}
 
 export interface ApiDefinition {
   /** Unique slug, e.g. "pokeapi". */
@@ -19,9 +18,17 @@ export interface ApiDefinition {
   name: string
   /** Semver, e.g. "2.0.0". */
   version: string
-  /** Sandbox base URL. */
+  /** Sandbox base URL (always REST). */
   baseUrl: string
-  // spec, docsFile, changelog, sdks added as features land.
+  description?: string
+  /** Imported OpenAPI 3.x document. */
+  spec: OpenAPIV3.Document
+  /** Getting Started guide (import the `.md` with Vite's `?raw`). */
+  docs?: string
+  /** SDK / library links. */
+  sdks?: SdkLink[]
+  /** Error reference catalogue. */
+  errorReference?: ErrorRefEntry[]
 }
 
 export const API_REGISTRY: ApiDefinition[] = []
