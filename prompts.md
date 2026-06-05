@@ -48,3 +48,11 @@
 - **Goal:** Choose adapter-selection mechanism for DAL/Auth
 - **Prompt:** "shouldn't we select DAL/Auth adapters via config instead of env vars? WDYT?"
 - **Outcome:** Agreed. Adapter selection moved to a typed `appConfig` single-source-of-truth + type-safe adapter registries (`Record<Kind, () => Adapter>`, exhaustively type-checked); env vars reserved for provider secrets/overrides. Also unlocks the runtime multi-environment switcher bonus. Plan approved. Plan snapshot → [plans/plan-v3.md](plans/plan-v3.md).
+
+### Entry 008
+- **Tool:** Claude Opus 4.8
+- **Goal:** Initialize git, commit prompts + plans, push to remote (before implementation)
+- **Prompt:** "Before implementing the plan lets git init, and commit prompts + push to remote" + "I want prompts and plan in project" + "use raghavvnarang@gmail.com for author"
+- **Polls (AskUserQuestion):**
+  - GitHub repo visibility? → **Public**
+- **Outcome:** Flushed prompt-log backlog (Entries 005–007, plan-v1/v2/v3, memory). Created `.gitignore`. `git init` on `main`, author set to `raghavnarang <raghavvnarang@gmail.com>`. Committed prompts.md + plans/ + .gitignore. Created public repo and pushed → https://github.com/raghavnarang/api-docs-demo.
