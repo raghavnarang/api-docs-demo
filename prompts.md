@@ -56,3 +56,9 @@
 - **Polls (AskUserQuestion):**
   - GitHub repo visibility? → **Public**
 - **Outcome:** Flushed prompt-log backlog (Entries 005–007, plan-v1/v2/v3, memory). Created `.gitignore`. `git init` on `main`, author set to `raghavnarang <raghavvnarang@gmail.com>`. Committed prompts.md + plans/ + .gitignore. Created public repo and pushed → https://github.com/raghavnarang/api-docs-demo.
+
+### Entry 009
+- **Tool:** Claude Opus 4.8
+- **Goal:** Implement the approved setup plan (plan-v3)
+- **Prompt:** "Lets implement the plan now"
+- **Outcome:** Scaffolded Vite 6 + React 18 + strict TS (built manually to avoid `npm create` prompt on non-empty dir). Added Tailwind v4, TanStack Router v1 + Query v5, Zustand, Zod, ESLint flat + Prettier, Vitest + RTL. Built DAL abstraction (repository interfaces + typed `appConfig` selection + type-safe registry + mock adapter), auth abstraction (`AuthProvider` + `useAuth()` + mock), always-REST sandbox executor, API registry, and lib stubs. Wired QueryClient → Auth → Router provider chain rendering a Hello World page. Fixes during verify: added `vite-env.d.ts` for CSS types, switched to `vitest/config` + bumped Vitest to v3 (deduped a nested vite causing plugin-type clash), eslint `^_` ignore for stub params, stubbed `window.scrollTo` in tests. All green — type-check 0 errors, lint 0 errors (2 benign react-refresh warnings), test passes, build 83.69 kB gzip, dev boots HTTP 200. Committed in 4 atomic conventional commits.
