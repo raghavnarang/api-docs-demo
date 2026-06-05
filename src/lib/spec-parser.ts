@@ -22,6 +22,37 @@ export interface EndpointParam {
 export interface EndpointResponse {
   status: string
   description?: string
+  /** Resolved body schema for the response (prefers `application/json`). */
+  schema?: SchemaNode
+}
+
+/**
+ * A resolved, recursive view of an OpenAPI schema for rendering body/response
+ * field tables. `$ref`s are followed; `required` is flattened onto each property
+ * node (parent stamps it from the object's `required[]`) to mirror the flat
+ * `EndpointParam.required` so renderers stay dumb. `properties` is ordered to
+ * preserve spec order.
+ */
+export interface SchemaNode {
+  type?: string
+  format?: string
+  description?: string
+  /** Set by the parent object for its properties. */
+  required?: boolean
+  enum?: (string | number | boolean)[]
+  properties?: { name: string; schema: SchemaNode }[]
+  /** Element schema when `type === 'array'`. */
+  items?: SchemaNode
+  /** Value schema for free-form maps (`additionalProperties`); `{}` means "any". */
+  additionalProperties?: SchemaNode
+  /** Set when the schema is a `oneOf`/`anyOf` union — render `variants`. */
+  composition?: 'oneOf' | 'anyOf'
+  /** Member schemas of a `oneOf`/`anyOf` union. */
+  variants?: SchemaNode[]
+  nullable?: boolean
+  example?: unknown
+  /** True when a `$ref` cycle was cut here. */
+  circular?: boolean
 }
 
 export interface EndpointDef {
@@ -32,7 +63,7 @@ export interface EndpointDef {
   summary?: string
   description?: string
   params: EndpointParam[]
-  requestBody?: { required: boolean; contentTypes: string[] }
+  requestBody?: { required: boolean; contentTypes: string[]; schema?: SchemaNode }
   responses: EndpointResponse[]
 }
 
@@ -74,6 +105,120 @@ function schemaType(
   return schema.type
 }
 
+/**
+ * Resolve an OpenAPI schema into a recursive `SchemaNode`. Follows local `$ref`s,
+ * recurses objects/arrays/maps, merges `allOf`, surfaces `oneOf`/`anyOf` as
+ * `variants`, and stamps `required` onto each object property.
+ *
+ * `seen` holds the `$ref` strings on the current descent path: if a ref recurs we
+ * cut the cycle (`circular: true`) instead of looping forever, then unwind so the
+ * same schema reused in a sibling branch still renders.
+ */
+function normalizeSchema(
+  doc: OpenAPIV3.Document,
+  raw?: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject,
+  seen: Set<string> = new Set(),
+): SchemaNode | undefined {
+  if (!raw) return undefined
+
+  if ('$ref' in raw) {
+    const ref = raw.$ref
+    const resolved = resolveRef<OpenAPIV3.SchemaObject>(doc, ref)
+    if (!resolved) return undefined
+    if (seen.has(ref)) return { type: resolved.type, circular: true }
+    seen.add(ref)
+    const node = normalizeSchema(doc, resolved, seen)
+    seen.delete(ref)
+    return node
+  }
+
+  const schema = raw
+
+  // OpenAPI 3.1 allows `type: ["string", "null"]`; collapse to a single type + nullable.
+  let type = schema.type as string | string[] | undefined
+  let nullable = schema.nullable
+  if (Array.isArray(type)) {
+    if (type.includes('null')) nullable = true
+    type = type.find((t) => t !== 'null')
+  }
+
+  // oneOf/anyOf are unions — surface the members as variants rather than flattening.
+  const union = schema.oneOf ? 'oneOf' : schema.anyOf ? 'anyOf' : undefined
+  const members = schema.oneOf ?? schema.anyOf
+  if (union && members) {
+    const node: SchemaNode = {
+      composition: union,
+      variants: members
+        .map((m) => normalizeSchema(doc, m, seen))
+        .filter((n): n is SchemaNode => n !== undefined),
+      description: schema.description,
+    }
+    if (nullable) node.nullable = true
+    return node
+  }
+
+  const node: SchemaNode = {
+    type,
+    format: schema.format,
+    description: schema.description,
+    nullable,
+    example: schema.example,
+  }
+  if (schema.enum) node.enum = schema.enum as SchemaNode['enum']
+
+  if (type === 'array' && 'items' in schema && schema.items) {
+    node.items = normalizeSchema(doc, schema.items, seen)
+  }
+
+  // Merge `allOf` members and the schema's own `properties` into one object,
+  // de-duping by name and OR-ing the required flag.
+  const props = new Map<string, { name: string; schema: SchemaNode }>()
+  const upsert = (name: string, child: SchemaNode) => {
+    const existing = props.get(name)
+    if (existing) existing.schema.required ||= child.required
+    else props.set(name, { name, schema: child })
+  }
+
+  if (schema.allOf) {
+    if (!node.type) node.type = 'object'
+    for (const member of schema.allOf) {
+      const memberNode = normalizeSchema(doc, member, seen)
+      memberNode?.properties?.forEach((p) => upsert(p.name, p.schema))
+    }
+  }
+
+  if (schema.properties) {
+    const requiredNames = new Set(schema.required ?? [])
+    for (const [name, propRaw] of Object.entries(schema.properties)) {
+      const propSchema = normalizeSchema(doc, propRaw, seen) ?? {}
+      propSchema.required = requiredNames.has(name)
+      upsert(name, propSchema)
+    }
+  }
+
+  if (props.size) node.properties = [...props.values()]
+
+  // Free-form map: `additionalProperties: true` → any value; a schema → typed value.
+  if (schema.additionalProperties) {
+    node.additionalProperties =
+      schema.additionalProperties === true
+        ? {}
+        : normalizeSchema(doc, schema.additionalProperties, seen)
+  }
+
+  return node
+}
+
+/** Pick the schema to render from a content map: prefer JSON, else the first type. */
+function pickContentSchema(
+  content?: Record<string, OpenAPIV3.MediaTypeObject>,
+): OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject | undefined {
+  if (!content) return undefined
+  const json = content['application/json']
+  if (json) return json.schema
+  return Object.values(content)[0]?.schema
+}
+
 function parseParam(
   doc: OpenAPIV3.Document,
   raw: OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject,
@@ -93,7 +238,13 @@ function parseParam(
 export function parseOpenApiSpec(doc: OpenAPIV3.Document): EndpointDef[] {
   const endpoints: EndpointDef[] = []
 
-  for (const [path, pathItem] of Object.entries(doc.paths ?? {})) {
+  for (const [path, rawPathItem] of Object.entries(doc.paths ?? {})) {
+    if (!rawPathItem) continue
+
+    // A path item may itself be a `$ref` (e.g. shared operations) — resolve it.
+    const pathItem = rawPathItem.$ref
+      ? resolveRef<OpenAPIV3.PathItemObject>(doc, rawPathItem.$ref)
+      : rawPathItem
     if (!pathItem) continue
 
     // Params declared at the path level apply to every operation on it.
@@ -127,11 +278,16 @@ export function parseOpenApiSpec(doc: OpenAPIV3.Document): EndpointDef[] {
           ? {
               required: body.required ?? false,
               contentTypes: Object.keys(body.content ?? {}),
+              schema: normalizeSchema(doc, pickContentSchema(body.content)),
             }
           : undefined,
         responses: Object.entries(op.responses ?? {}).map(([status, res]) => {
           const resolved = deref<OpenAPIV3.ResponseObject>(doc, res)
-          return { status, description: resolved?.description }
+          return {
+            status,
+            description: resolved?.description,
+            schema: normalizeSchema(doc, pickContentSchema(resolved?.content)),
+          }
         }),
       })
     }
