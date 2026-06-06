@@ -14,3 +14,20 @@ export const useDocsUiStore = create<DocsUiState>((set) => ({
   activeEndpointId: null,
   setActiveEndpointId: (id) => set({ activeEndpointId: id }),
 }))
+
+/**
+ * Open/close state for the Cmd/Ctrl+K search dialog. Shared so the global
+ * keyboard shortcut (in `AppShell`) and the header trigger button drive the same
+ * dialog.
+ */
+interface SearchUiState {
+  open: boolean
+  setOpen: (open: boolean) => void
+  toggle: () => void
+}
+
+export const useSearchUiStore = create<SearchUiState>((set) => ({
+  open: false,
+  setOpen: (open) => set({ open }),
+  toggle: () => set((s) => ({ open: !s.open })),
+}))
