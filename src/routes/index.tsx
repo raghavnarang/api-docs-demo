@@ -1,17 +1,11 @@
-import { createRoute } from '@tanstack/react-router'
-import { rootRoute } from './__root'
+import { createRoute, redirect } from '@tanstack/react-router'
+import { appLayoutRoute } from './app-layout'
 
+/** Root path redirects into the docs catalogue — the portal's default landing. */
 export const indexRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appLayoutRoute,
   path: '/',
-  component: HomePage,
+  beforeLoad: () => {
+    throw redirect({ to: '/docs' })
+  },
 })
-
-function HomePage() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-slate-50 text-slate-900">
-      <h1 className="text-3xl font-bold">Developer Portal</h1>
-      <p className="text-slate-500">Hello — project scaffold is running.</p>
-    </main>
-  )
-}
