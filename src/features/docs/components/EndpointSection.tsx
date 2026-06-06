@@ -3,6 +3,7 @@ import { MethodBadge } from '../../../components/MethodBadge'
 import { StatusBadge } from '../../../components/StatusBadge'
 import { ParamsTable } from '../../../components/ParamsTable'
 import { SchemaViewer } from '../../../components/SchemaViewer'
+import { CopyLinkButton } from '../../../components/CopyLinkButton'
 
 /**
  * Renders one endpoint entirely from its parsed `EndpointDef`: method badge,
@@ -18,9 +19,10 @@ export function EndpointSection({ endpoint }: { endpoint: EndpointDef }) {
       id={endpoint.id}
       className="scroll-mt-20 border-t border-slate-200 py-8"
     >
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="group flex flex-wrap items-center gap-2">
         <MethodBadge method={method} />
         <code className="font-mono text-sm text-slate-800">{path}</code>
+        <CopyLinkButton anchorId={endpoint.id} />
       </div>
       {summary ? (
         <h3 className="mt-2 text-lg font-semibold text-slate-900">{summary}</h3>
