@@ -1,0 +1,37 @@
+[
+  {
+    "code": "INSUFFICIENT_FUNDS",
+    "httpStatus": 402,
+    "title": "Insufficient Funds",
+    "description": "The payment method has insufficient funds to cover the requested amount.",
+    "resolution": "Ask the customer to use a different payment method or reduce the amount."
+  },
+  {
+    "code": "CARD_DECLINED",
+    "httpStatus": 402,
+    "title": "Card Declined",
+    "description": "The issuing bank declined the card. The decline reason is returned in `decline_code`.",
+    "resolution": "Surface a generic failure to the customer and prompt for an alternative method. Do not retry the same card automatically."
+  },
+  {
+    "code": "IDEMPOTENCY_CONFLICT",
+    "httpStatus": 409,
+    "title": "Idempotency Key Conflict",
+    "description": "The supplied `Idempotency-Key` was already used with a different request body.",
+    "resolution": "Generate a fresh idempotency key per logical operation; never reuse a key across different payloads."
+  },
+  {
+    "code": "VALIDATION_ERROR",
+    "httpStatus": 422,
+    "title": "Validation Error",
+    "description": "The request body failed validation — e.g. `amount` below the minimum or an unknown `currency`.",
+    "resolution": "Inspect the `errors[]` array in the response; each entry names the offending field and constraint."
+  },
+  {
+    "code": "UNAUTHORIZED",
+    "httpStatus": 401,
+    "title": "Unauthorized",
+    "description": "The bearer token is missing, malformed, or expired.",
+    "resolution": "Refresh the token and resend the request with a valid `Authorization: Bearer` header."
+  }
+]

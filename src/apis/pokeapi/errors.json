@@ -1,0 +1,23 @@
+[
+  {
+    "code": "404",
+    "httpStatus": 404,
+    "title": "Resource Not Found",
+    "description": "The requested resource does not exist — e.g. an unknown Pokémon name or id.",
+    "resolution": "Check the identifier. Names are lowercase and hyphenated (e.g. `mr-mime`); ids are positive integers within the resource's range."
+  },
+  {
+    "code": "429",
+    "httpStatus": 429,
+    "title": "Too Many Requests",
+    "description": "You have exceeded the fair-use rate limit for the shared public API.",
+    "resolution": "Cache responses locally and back off before retrying. PokéAPI data is effectively static, so repeated identical requests are unnecessary."
+  },
+  {
+    "code": "500",
+    "httpStatus": 500,
+    "title": "Internal Server Error",
+    "description": "An unexpected error occurred on the PokéAPI servers.",
+    "resolution": "Retry with exponential backoff. If it persists, check the PokéAPI status page or GitHub issues."
+  }
+]

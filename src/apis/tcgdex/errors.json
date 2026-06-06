@@ -1,0 +1,23 @@
+[
+  {
+    "code": "400",
+    "httpStatus": 400,
+    "title": "Bad Request",
+    "description": "The request was malformed — e.g. an invalid query filter or unsupported language code.",
+    "resolution": "Verify the path segment language code and any query filters against the documented endpoints."
+  },
+  {
+    "code": "404",
+    "httpStatus": 404,
+    "title": "Not Found",
+    "description": "No card, set, or series matches the supplied id.",
+    "resolution": "Confirm the id format (`{set}-{localId}` for cards, e.g. `base1-4`). List the parent collection to discover valid ids."
+  },
+  {
+    "code": "503",
+    "httpStatus": 503,
+    "title": "Service Unavailable",
+    "description": "The API is temporarily unavailable or under maintenance.",
+    "resolution": "Retry after a short delay with exponential backoff."
+  }
+]
