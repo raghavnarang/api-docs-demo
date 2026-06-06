@@ -28,8 +28,11 @@ export function Sidebar() {
       className="flex h-full flex-col overflow-y-auto px-3 py-4"
       aria-label="API navigation"
     >
-      <Link to="/docs" className="px-2 text-sm font-semibold text-slate-900">
-        Developer Portal
+      <Link
+        to="/docs"
+        className="px-2 text-xs font-semibold uppercase tracking-wide text-slate-400"
+      >
+        API Catalogue
       </Link>
 
       <ul className="mt-4 space-y-1">
