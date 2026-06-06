@@ -1,0 +1,220 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Stub Payments API",
+    "version": "1.0.0",
+    "description": "A minimal mock payments API demonstrating write methods, request body schemas, oneOf composition with a discriminator, and validation constraints."
+  },
+  "servers": [{ "url": "https://api.example-pay.test/v1" }],
+  "paths": {
+    "/payments": {
+      "get": {
+        "operationId": "listPayments",
+        "summary": "List payments",
+        "tags": ["payments"],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Maximum number of payments to return.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "Filter by payment status.",
+            "schema": {
+              "type": "string",
+              "enum": ["pending", "succeeded", "failed"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of payments.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Payment" }
+                    },
+                    "hasMore": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createPayment",
+        "summary": "Create a payment",
+        "tags": ["payments"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreatePaymentRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Payment created.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Payment" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/{id}": {
+      "delete": {
+        "operationId": "cancelPayment",
+        "summary": "Cancel a payment",
+        "tags": ["payments"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The payment id to cancel.",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Payment cancelled." },
+          "404": {
+            "description": "Payment not found.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Payment": {
+        "type": "object",
+        "required": ["id", "amount", "currency", "status"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "readOnly": true,
+            "description": "Unique payment identifier.",
+            "example": "pay_3Nk9aB"
+          },
+          "amount": {
+            "type": "integer",
+            "description": "Amount in minor units (e.g. cents).",
+            "minimum": 1,
+            "maximum": 99999999
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code.",
+            "pattern": "^[A-Z]{3}$",
+            "example": "USD"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "succeeded", "failed"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "CreatePaymentRequest": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/CardPayment" },
+          { "$ref": "#/components/schemas/BankPayment" }
+        ],
+        "discriminator": { "propertyName": "method" }
+      },
+      "CardPayment": {
+        "type": "object",
+        "required": ["method", "amount", "currency", "card"],
+        "properties": {
+          "method": { "type": "string", "enum": ["card"] },
+          "amount": {
+            "type": "integer",
+            "description": "Amount in minor units.",
+            "minimum": 1,
+            "multipleOf": 1
+          },
+          "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+          "card": {
+            "type": "object",
+            "required": ["number", "expMonth", "expYear"],
+            "properties": {
+              "number": {
+                "type": "string",
+                "description": "Card number (PAN).",
+                "minLength": 12,
+                "maxLength": 19
+              },
+              "expMonth": { "type": "integer", "minimum": 1, "maximum": 12 },
+              "expYear": { "type": "integer", "minimum": 2024 },
+              "cvc": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 4,
+                "writeOnly": true
+              }
+            }
+          }
+        }
+      },
+      "BankPayment": {
+        "type": "object",
+        "required": ["method", "amount", "currency", "iban"],
+        "properties": {
+          "method": { "type": "string", "enum": ["bank"] },
+          "amount": { "type": "integer", "minimum": 1, "multipleOf": 1 },
+          "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+          "iban": {
+            "type": "string",
+            "description": "International Bank Account Number.",
+            "pattern": "^[A-Z]{2}[0-9A-Z]{13,32}$"
+          },
+          "accountHolder": { "type": "string" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": { "type": "string", "example": "invalid_currency" },
+          "message": { "type": "string" }
+        }
+      }
+    }
+  }
+}
