@@ -53,7 +53,12 @@ const mockSpec: OpenAPIV3.Document = {
       delete: {
         summary: 'Delete a pet',
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+          },
         ],
         responses: { '204': { description: 'Deleted' } },
       },
