@@ -49,8 +49,32 @@ export interface SchemaNode {
   composition?: 'oneOf' | 'anyOf'
   /** Member schemas of a `oneOf`/`anyOf` union. */
   variants?: SchemaNode[]
+  /** `propertyName` of an OpenAPI `discriminator`, if present. */
+  discriminator?: string
   nullable?: boolean
   example?: unknown
+  /** Default value if the field is omitted. */
+  default?: unknown
+  /** Field is present only in responses (`readOnly`) or only in requests (`writeOnly`). */
+  readOnly?: boolean
+  writeOnly?: boolean
+  /**
+   * Validation constraints carried straight from the spec for the docs "rules"
+   * cell. All optional; absent when the schema doesn't set them.
+   */
+  minimum?: number
+  maximum?: number
+  exclusiveMinimum?: boolean | number
+  exclusiveMaximum?: boolean | number
+  multipleOf?: number
+  minLength?: number
+  maxLength?: number
+  minItems?: number
+  maxItems?: number
+  minProperties?: number
+  maxProperties?: number
+  uniqueItems?: boolean
+  pattern?: string
   /** True when a `$ref` cycle was cut here. */
   circular?: boolean
 }
@@ -63,7 +87,11 @@ export interface EndpointDef {
   summary?: string
   description?: string
   params: EndpointParam[]
-  requestBody?: { required: boolean; contentTypes: string[]; schema?: SchemaNode }
+  requestBody?: {
+    required: boolean
+    contentTypes: string[]
+    schema?: SchemaNode
+  }
   responses: EndpointResponse[]
 }
 
@@ -99,10 +127,43 @@ function schemaType(
   const schema = deref<OpenAPIV3.SchemaObject>(doc, raw)
   if (!schema) return undefined
   if (schema.type === 'array') {
-    const item = schema.items ? deref<OpenAPIV3.SchemaObject>(doc, schema.items) : undefined
+    const item = schema.items
+      ? deref<OpenAPIV3.SchemaObject>(doc, schema.items)
+      : undefined
     return item?.type ? `array<${item.type}>` : 'array'
   }
   return schema.type
+}
+
+/**
+ * Copy display-only metadata (validation constraints, access flags, discriminator)
+ * from a resolved schema onto its node. Only sets keys the spec actually defines so
+ * the node stays sparse. Mutates `node`.
+ */
+function copyMeta(node: SchemaNode, schema: OpenAPIV3.SchemaObject): void {
+  const numeric = [
+    'minimum',
+    'maximum',
+    'exclusiveMinimum',
+    'exclusiveMaximum',
+    'multipleOf',
+    'minLength',
+    'maxLength',
+    'minItems',
+    'maxItems',
+    'minProperties',
+    'maxProperties',
+  ] as const
+  for (const key of numeric) {
+    if (schema[key] !== undefined) node[key] = schema[key] as never
+  }
+  if (schema.pattern !== undefined) node.pattern = schema.pattern
+  if (schema.uniqueItems !== undefined) node.uniqueItems = schema.uniqueItems
+  if (schema.default !== undefined) node.default = schema.default
+  if (schema.readOnly !== undefined) node.readOnly = schema.readOnly
+  if (schema.writeOnly !== undefined) node.writeOnly = schema.writeOnly
+  if (schema.discriminator)
+    node.discriminator = schema.discriminator.propertyName
 }
 
 /**
@@ -154,6 +215,7 @@ function normalizeSchema(
       description: schema.description,
     }
     if (nullable) node.nullable = true
+    copyMeta(node, schema)
     return node
   }
 
@@ -165,6 +227,7 @@ function normalizeSchema(
     example: schema.example,
   }
   if (schema.enum) node.enum = schema.enum as SchemaNode['enum']
+  copyMeta(node, schema)
 
   if (type === 'array' && 'items' in schema && schema.items) {
     node.items = normalizeSchema(doc, schema.items, seen)
@@ -238,6 +301,17 @@ function parseParam(
 export function parseOpenApiSpec(doc: OpenAPIV3.Document): EndpointDef[] {
   const endpoints: EndpointDef[] = []
 
+  // Real specs reuse or omit operationIds (e.g. TCGdex: 31/33 ops have none). Track
+  // emitted ids and suffix collisions so anchor ids + search keys stay unique.
+  const usedIds = new Set<string>()
+  const uniqueId = (base: string): string => {
+    let id = base
+    let n = 2
+    while (usedIds.has(id)) id = `${base}_${n++}`
+    usedIds.add(id)
+    return id
+  }
+
   for (const [path, rawPathItem] of Object.entries(doc.paths ?? {})) {
     if (!rawPathItem) continue
 
@@ -266,9 +340,11 @@ export function parseOpenApiSpec(doc: OpenAPIV3.Document): EndpointDef[] {
 
       endpoints.push({
         // Prefer the spec's canonical operationId; fall back to a method+path slug.
-        id:
+        // `uniqueId` suffixes any collision so ids stay stable and unique.
+        id: uniqueId(
           op.operationId ??
-          `${method}_${path}`.replace(/[^a-z0-9]+/gi, '_').toLowerCase(),
+            `${method}_${path}`.replace(/[^a-z0-9]+/gi, '_').toLowerCase(),
+        ),
         method,
         path,
         summary: op.summary,
