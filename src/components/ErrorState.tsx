@@ -1,3 +1,5 @@
+import { AlertTriangle } from 'lucide-react'
+
 /** Error placeholder with an optional retry action. */
 export function ErrorState({
   title = 'Something went wrong',
@@ -14,9 +16,7 @@ export function ErrorState({
       role="alert"
       className="flex flex-col items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-6 py-12 text-center"
     >
-      <span className="text-2xl text-red-400" aria-hidden>
-        ⚠
-      </span>
+      <AlertTriangle className="h-7 w-7 text-red-400" aria-hidden />
       <p className="font-medium text-red-800">{title}</p>
       {detail ? <p className="text-sm text-red-600">{detail}</p> : null}
       {onRetry ? (
