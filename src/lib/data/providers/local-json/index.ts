@@ -1,7 +1,7 @@
 import { API_REGISTRY, type ApiDefinition } from '../../../../apis/api-registry'
 import type { DataSource } from '../../data-source'
 import type { ApiCatalogRepository } from '../../repositories'
-import { searchEndpoints } from './endpoint-search'
+import { specMatchesQuery } from './search'
 
 /**
  * Reads the API catalogue from the static `API_REGISTRY` (+ each entry's bundled
@@ -38,11 +38,12 @@ export function createLocalJsonDataSource(
     async getErrorReference(id) {
       return find(id)?.errorReference ?? []
     },
-    async searchEndpoints(query) {
-      return searchEndpoints(
-        registry.map(({ id, name, spec }) => ({ id, name, spec })),
-        query,
-      )
+    async searchApis(query) {
+      const q = query.trim().toLowerCase()
+      if (!q) return []
+      return registry
+        .filter(({ spec }) => specMatchesQuery(spec, q))
+        .map(({ id, name }) => ({ apiId: id, apiName: name }))
     },
   }
 

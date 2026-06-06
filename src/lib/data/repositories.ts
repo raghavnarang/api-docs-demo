@@ -1,8 +1,8 @@
 import type { OpenAPIV3 } from 'openapi-types'
 import type {
   ApiDetail,
+  ApiSearchHit,
   ApiSummary,
-  EndpointSearchResult,
   ErrorRefEntry,
 } from './types'
 
@@ -23,9 +23,11 @@ export interface ApiCatalogRepository {
   /** Error reference catalogue. */
   getErrorReference(id: string): Promise<ErrorRefEntry[]>
   /**
-   * Full-text search across endpoints, descriptions, and parameters (§2.2).
-   * Lives behind the DAL so the impl (in-memory vs backend) is swappable;
-   * callers debounce the query on the client.
+   * Tier-2 cross-API full-text search (§2.2): which APIs contain the keyword
+   * across endpoints, descriptions, and parameters. Id-agnostic — anchor ids are
+   * a frontend concern, so this returns only `{apiId, apiName}`. The impl is
+   * swappable: local-json scans its bundled specs, a REST adapter hits a backend
+   * search endpoint. Callers debounce the query on the client.
    */
-  searchEndpoints(query: string): Promise<EndpointSearchResult[]>
+  searchApis(query: string): Promise<ApiSearchHit[]>
 }
