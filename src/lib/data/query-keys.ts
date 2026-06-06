@@ -8,6 +8,8 @@ export const queryKeys = {
     list: () => [...queryKeys.apis.all, 'list'] as const,
     detail: (id: string) => [...queryKeys.apis.all, 'detail', id] as const,
     spec: (id: string) => [...queryKeys.apis.all, 'spec', id] as const,
+    endpoints: (id: string) =>
+      [...queryKeys.apis.all, 'endpoints', id] as const,
     docs: (id: string) => [...queryKeys.apis.all, 'docs', id] as const,
     errors: (id: string) => [...queryKeys.apis.all, 'errors', id] as const,
     search: (query: string) =>

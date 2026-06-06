@@ -25,6 +25,15 @@ export interface AppConfig {
   sandbox: {
     defaultBaseUrl: string
   }
+  docs: {
+    /**
+     * How long a parsed OpenAPI spec stays fresh in the client cache before it is
+     * re-parsed/refetched. Static `local-json` specs never change → `Infinity`
+     * (parse once per session). A REST source should use a finite interval so
+     * backend spec changes are picked up.
+     */
+    specCacheTtlMs: number
+  }
 }
 
 export const appConfig: AppConfig = {
@@ -32,5 +41,8 @@ export const appConfig: AppConfig = {
   authProvider: 'mock',
   sandbox: {
     defaultBaseUrl: 'https://pokeapi.co/api/v2',
+  },
+  docs: {
+    specCacheTtlMs: Number.POSITIVE_INFINITY,
   },
 }
