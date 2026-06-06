@@ -154,7 +154,9 @@ describe('parseOpenApiSpec — schema extraction', () => {
                         properties: {
                           types: {
                             type: 'array',
-                            items: { $ref: '#/components/schemas/NamedAPIResource' },
+                            items: {
+                              $ref: '#/components/schemas/NamedAPIResource',
+                            },
                           },
                         },
                       },
@@ -179,7 +181,10 @@ describe('parseOpenApiSpec — schema extraction', () => {
 
     const types = ep.responses[0].schema?.properties?.[0].schema
     expect(types?.type).toBe('array')
-    expect(types?.items?.properties?.map((p) => p.name)).toEqual(['name', 'url'])
+    expect(types?.items?.properties?.map((p) => p.name)).toEqual([
+      'name',
+      'url',
+    ])
   })
 
   test('nested objects recurse to the right depth', () => {
@@ -328,7 +333,12 @@ describe('parseOpenApiSpec — schema extraction', () => {
             requestBody: {
               content: {
                 'application/xml': { schema: { type: 'string' } },
-                'application/json': { schema: { type: 'object', properties: { a: { type: 'string' } } } },
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: { a: { type: 'string' } },
+                  },
+                },
               },
             },
             responses: { '200': { description: 'OK' } },
@@ -429,8 +439,12 @@ describe('parseOpenApiSpec — schema extraction', () => {
     const schema = ep.responses[0].schema
     expect(schema?.type).toBe('object')
     expect(schema?.properties?.map((p) => p.name)).toEqual(['id', 'name'])
-    expect(schema?.properties?.find((p) => p.name === 'name')?.schema.required).toBe(true)
-    expect(schema?.properties?.find((p) => p.name === 'id')?.schema.required).toBe(false)
+    expect(
+      schema?.properties?.find((p) => p.name === 'name')?.schema.required,
+    ).toBe(true)
+    expect(
+      schema?.properties?.find((p) => p.name === 'id')?.schema.required,
+    ).toBe(false)
   })
 
   test('oneOf / anyOf surface as variants with a composition tag', () => {
@@ -444,8 +458,14 @@ describe('parseOpenApiSpec — schema extraction', () => {
                 'application/json': {
                   schema: {
                     oneOf: [
-                      { type: 'object', properties: { card: { type: 'string' } } },
-                      { type: 'object', properties: { bank: { type: 'string' } } },
+                      {
+                        type: 'object',
+                        properties: { card: { type: 'string' } },
+                      },
+                      {
+                        type: 'object',
+                        properties: { bank: { type: 'string' } },
+                      },
                     ],
                   },
                 },
@@ -458,7 +478,9 @@ describe('parseOpenApiSpec — schema extraction', () => {
     )
     expect(oneOf.requestBody?.schema?.composition).toBe('oneOf')
     expect(oneOf.requestBody?.schema?.variants).toHaveLength(2)
-    expect(oneOf.requestBody?.schema?.variants?.[0].properties?.[0].name).toBe('card')
+    expect(oneOf.requestBody?.schema?.variants?.[0].properties?.[0].name).toBe(
+      'card',
+    )
 
     const anyOf = only(
       makeDoc({
@@ -549,6 +571,169 @@ describe('parseOpenApiSpec — schema extraction', () => {
     )
     expect(ep.requestBody?.schema?.type).toBe('string')
     expect(ep.requestBody?.schema?.nullable).toBe(true)
+  })
+
+  test('carries validation constraints onto the node', () => {
+    const ep = only(
+      makeDoc({
+        '/x': {
+          post: {
+            operationId: 'x',
+            requestBody: {
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      amount: {
+                        type: 'integer',
+                        minimum: 1,
+                        maximum: 100000,
+                        multipleOf: 1,
+                        default: 100,
+                      },
+                      code: {
+                        type: 'string',
+                        minLength: 3,
+                        maxLength: 3,
+                        pattern: '^[A-Z]+$',
+                      },
+                      tags: {
+                        type: 'array',
+                        items: { type: 'string' },
+                        minItems: 1,
+                        uniqueItems: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            responses: { '200': { description: 'OK' } },
+          },
+        },
+      }),
+    )
+
+    const props = ep.requestBody?.schema?.properties ?? []
+    const amount = props.find((p) => p.name === 'amount')?.schema
+    expect(amount).toMatchObject({
+      minimum: 1,
+      maximum: 100000,
+      multipleOf: 1,
+      default: 100,
+    })
+    const code = props.find((p) => p.name === 'code')?.schema
+    expect(code).toMatchObject({
+      minLength: 3,
+      maxLength: 3,
+      pattern: '^[A-Z]+$',
+    })
+    const tags = props.find((p) => p.name === 'tags')?.schema
+    expect(tags).toMatchObject({ minItems: 1, uniqueItems: true })
+  })
+
+  test('carries readOnly / writeOnly flags', () => {
+    const ep = only(
+      makeDoc({
+        '/x': {
+          post: {
+            operationId: 'x',
+            requestBody: {
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string', readOnly: true },
+                      secret: { type: 'string', writeOnly: true },
+                    },
+                  },
+                },
+              },
+            },
+            responses: { '200': { description: 'OK' } },
+          },
+        },
+      }),
+    )
+
+    const props = ep.requestBody?.schema?.properties ?? []
+    expect(props.find((p) => p.name === 'id')?.schema.readOnly).toBe(true)
+    expect(props.find((p) => p.name === 'secret')?.schema.writeOnly).toBe(true)
+  })
+
+  test('captures discriminator propertyName on a oneOf union', () => {
+    const ep = only(
+      makeDoc({
+        '/pay': {
+          post: {
+            operationId: 'pay',
+            requestBody: {
+              content: {
+                'application/json': {
+                  schema: {
+                    oneOf: [
+                      {
+                        type: 'object',
+                        properties: {
+                          kind: { type: 'string', enum: ['card'] },
+                          cardNumber: { type: 'string' },
+                        },
+                      },
+                      {
+                        type: 'object',
+                        properties: {
+                          kind: { type: 'string', enum: ['bank'] },
+                          iban: { type: 'string' },
+                        },
+                      },
+                    ],
+                    discriminator: { propertyName: 'kind' },
+                  },
+                },
+              },
+            },
+            responses: { '200': { description: 'OK' } },
+          },
+        },
+      }),
+    )
+
+    const schema = ep.requestBody?.schema
+    expect(schema?.composition).toBe('oneOf')
+    expect(schema?.discriminator).toBe('kind')
+    // distinct variants — the discriminator (`kind`) is what tells them apart
+    expect(schema?.variants?.[0].properties?.map((p) => p.name)).toEqual([
+      'kind',
+      'cardNumber',
+    ])
+    expect(schema?.variants?.[1].properties?.map((p) => p.name)).toEqual([
+      'kind',
+      'iban',
+    ])
+  })
+
+  test('endpoint ids stay unique when operationId is reused', () => {
+    const eps = parseOpenApiSpec(
+      makeDoc({
+        '/a': {
+          get: {
+            operationId: 'dup',
+            responses: { '200': { description: 'OK' } },
+          },
+        },
+        '/b': {
+          get: {
+            operationId: 'dup',
+            responses: { '200': { description: 'OK' } },
+          },
+        },
+      }),
+    )
+    const ids = eps.map((e) => e.id)
+    expect(new Set(ids).size).toBe(ids.length)
+    expect(ids).toEqual(['dup', 'dup_2'])
   })
 
   test('path item that is a $ref resolves to its operations', () => {
