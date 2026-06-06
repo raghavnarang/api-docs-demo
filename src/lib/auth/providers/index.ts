@@ -1,6 +1,7 @@
 import type { AuthProviderKind } from '../../../app/config'
 import type { AuthProvider } from '../types'
 import { createMockAuthProvider } from './mock'
+import { createSupabaseAuthProvider } from './supabase'
 
 /**
  * Type-safe adapter registry: every AuthProviderKind must map to a factory.
@@ -12,7 +13,7 @@ export const authProviderRegistry: Record<
   () => AuthProvider
 > = {
   mock: createMockAuthProvider,
-  supabase: notImplemented('supabase'),
+  supabase: createSupabaseAuthProvider,
   firebase: notImplemented('firebase'),
   auth0: notImplemented('auth0'),
   'custom-jwt': notImplemented('custom-jwt'),

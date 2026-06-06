@@ -38,7 +38,7 @@ export interface AppConfig {
 
 export const appConfig: AppConfig = {
   dataSource: 'local-json',
-  authProvider: 'mock',
+  authProvider: 'supabase',
   sandbox: {
     defaultBaseUrl: 'https://pokeapi.co/api/v2',
   },

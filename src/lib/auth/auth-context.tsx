@@ -9,11 +9,16 @@ import {
 import type { AuthProvider, AuthSession, SignInCredentials } from './types'
 import { getAuthProvider } from './auth-source'
 
-interface AuthContextValue {
+export interface AuthContextValue {
   session: AuthSession | null
   loading: boolean
   signIn: (credentials: SignInCredentials) => Promise<void>
-  signUp: (credentials: SignInCredentials) => Promise<void>
+  /**
+   * Returns the new session. When the provider requires email confirmation no
+   * real session exists yet, signalled by an empty `token` (the UI then prompts
+   * the user to check their inbox instead of redirecting).
+   */
+  signUp: (credentials: SignInCredentials) => Promise<AuthSession>
   signOut: () => Promise<void>
 }
 
@@ -45,9 +50,7 @@ export function AuthContextProvider({ children }: { children: ReactNode }) {
       signIn: async (credentials) => {
         await provider.signIn(credentials)
       },
-      signUp: async (credentials) => {
-        await provider.signUp(credentials)
-      },
+      signUp: (credentials) => provider.signUp(credentials),
       signOut: () => provider.signOut(),
     }),
     [provider, session, loading],
