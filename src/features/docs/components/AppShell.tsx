@@ -4,6 +4,7 @@ import { Search } from 'lucide-react'
 import { Sidebar } from './Sidebar'
 import { SearchDialog } from './SearchDialog'
 import { useSearchUiStore } from '../store'
+import { UserMenu } from '../../auth/components/UserMenu'
 
 /**
  * Persistent two-column portal layout: a slim header (with the search trigger) +
@@ -35,18 +36,21 @@ export function AppShell() {
         <span className="text-sm font-semibold text-slate-900">
           Developer Portal
         </span>
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-          aria-label="Search APIs"
-        >
-          <Search className="h-4 w-4" aria-hidden />
-          <span>Search…</span>
-          <kbd className="rounded border border-slate-200 px-1.5 py-0.5 font-mono text-[10px] text-slate-400">
-            ⌘K
-          </kbd>
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            aria-label="Search APIs"
+          >
+            <Search className="h-4 w-4" aria-hidden />
+            <span>Search…</span>
+            <kbd className="rounded border border-slate-200 px-1.5 py-0.5 font-mono text-[10px] text-slate-400">
+              ⌘K
+            </kbd>
+          </button>
+          <UserMenu />
+        </div>
       </header>
 
       <div className="flex">

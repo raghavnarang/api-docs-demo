@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { Link, useParams } from '@tanstack/react-router'
+import { KeyRound, TerminalSquare } from 'lucide-react'
 import {
   useApi,
   useApiDocs,
@@ -144,6 +145,34 @@ export function Sidebar() {
           )
         })}
       </ul>
+
+      <div className="mt-6 border-t border-slate-200 pt-4">
+        <p className="px-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          Portal
+        </p>
+        <ul className="mt-2 space-y-1">
+          <li>
+            <Link
+              to="/keys"
+              className="flex items-center gap-2 rounded px-2 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+              activeProps={{ className: 'bg-slate-100 text-slate-900' }}
+            >
+              <KeyRound className="h-4 w-4" aria-hidden />
+              API Keys
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/sandbox"
+              className="flex items-center gap-2 rounded px-2 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+              activeProps={{ className: 'bg-slate-100 text-slate-900' }}
+            >
+              <TerminalSquare className="h-4 w-4" aria-hidden />
+              Sandbox
+            </Link>
+          </li>
+        </ul>
+      </div>
     </nav>
   )
 }
