@@ -736,6 +736,17 @@ describe('parseOpenApiSpec — schema extraction', () => {
     expect(ids).toEqual(['dup', 'dup_2'])
   })
 
+  test('fallback slug id has no leading/trailing underscores', () => {
+    const ep = only(
+      makeDoc({
+        '/rarities/{rarity}': {
+          get: { responses: { '200': { description: 'OK' } } },
+        },
+      }),
+    )
+    expect(ep.id).toBe('get_rarities_rarity')
+  })
+
   test('path item that is a $ref resolves to its operations', () => {
     const doc = {
       openapi: '3.0.0',

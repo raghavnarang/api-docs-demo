@@ -158,3 +158,14 @@
 - **Tool:** Claude Opus 4.8
 - **Prompt:** "Add clickable Link icon besides endpoint to copy it's hashed included link"
 - **Outcome:** Added a reusable `CopyLinkButton` (`src/components/CopyLinkButton.tsx`) that copies a deep link to the on-page anchor (`{origin}{pathname}#{anchorId}`) with a link→check icon swap and brief "Copied!" feedback; fails quietly when the clipboard API is unavailable. Wired it beside the path in each `EndpointSection` header. Added a test mocking `navigator.clipboard.writeText`. Verified: 35/35 tests, type-check 0, lint 0 errors.
+
+### Entry 017
+- **Tool:** Claude Opus 4.8
+- **Prompt:** "after every prompt put entry in prompts.md proactively as single entry"
+- **Outcome:** Updated the prompt-log workflow memory: ONE entry per prompt (never bundle multiple prompts into one entry — questions, clarifications and refinements each get their own entry), appended proactively after each prompt, with the prompt kept verbatim. Prior bundled entries (014, 015) left as-is; rule applies going forward.
+
+### Entry 018
+- **Tool:** Claude Opus 4.8
+- **Prompt:** "Spec parser is generating ID wrong, extra _
+get_rarities_rarity_"
+- **Outcome:** Fixed the fallback slug in `parseOpenApiSpec`: a trailing path token like `{rarity}` left a trailing `_` (e.g. `get_rarities_rarity_`). Added `.replace(/^_+|_+$/g, '')` to trim leading/trailing underscores. Added a regression test asserting `/rarities/{rarity}` → `get_rarities_rarity`. Verified: 20 parser tests pass, type-check 0, lint 0 errors. (Also noted: this prompt-log commit also carries the uncommitted Entry 017.)

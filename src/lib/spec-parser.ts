@@ -343,7 +343,10 @@ export function parseOpenApiSpec(doc: OpenAPIV3.Document): EndpointDef[] {
         // `uniqueId` suffixes any collision so ids stay stable and unique.
         id: uniqueId(
           op.operationId ??
-            `${method}_${path}`.replace(/[^a-z0-9]+/gi, '_').toLowerCase(),
+            `${method}_${path}`
+              .replace(/[^a-z0-9]+/gi, '_')
+              .replace(/^_+|_+$/g, '')
+              .toLowerCase(),
         ),
         method,
         path,
