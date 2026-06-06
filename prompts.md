@@ -169,3 +169,33 @@
 - **Prompt:** "Spec parser is generating ID wrong, extra _
 get_rarities_rarity_"
 - **Outcome:** Fixed the fallback slug in `parseOpenApiSpec`: a trailing path token like `{rarity}` left a trailing `_` (e.g. `get_rarities_rarity_`). Added `.replace(/^_+|_+$/g, '')` to trim leading/trailing underscores. Added a regression test asserting `/rarities/{rarity}` → `get_rarities_rarity`. Verified: 20 parser tests pass, type-check 0, lint 0 errors. (Also noted: this prompt-log commit also carries the uncommitted Entry 017.)
+
+### Entry 019
+- **Tool:** Claude Opus 4.8
+- **Goal:** Plan the deferred Cmd/Ctrl+K search pass (§2.2)
+- **Prompt:** "check reference from plans/plan-v6.md prompts.md and continue the work by planning of the deferred search pass with search dialog. More info in PDF"
+- **Polls (AskUserQuestion):**
+  - Result UX? → **endpoint-level deep links**, but user asked how multiple matches per keyword are handled
+  - Refactor DAL search? → **Replace with id-agnostic `searchApis`**
+  - Polish scope? → **loading/empty/error states only** (no arrow-nav, highlight, or recent-searches)
+  - Multi-match handling? → **list every matching endpoint**, grouped by API, each deep-linking to its own anchor
+- **Plan-mode refinements (rejections):** "what if any openapi is not in cache?" (→ on-demand fetch via shared `useQueries`, parse-at-most-once); "where do you use `specMatchesQuery`? on REST there's no spec in hand" (→ `searchApis` is the DAL abstraction; local-json scans bundled specs, REST does a `fetch` — moved the frontend matcher to neutral `src/lib/endpoint-match.ts`); "fetch parsed cache in `specMatchesQuery`, if available" (→ cache-first assembly in the frontend hook); "how it works for remote backend vs local json" (→ documented per-backend rationale).
+- **Outcome:** Approved plan → [plans/plan-v6.md](plans/plan-v6.md) (search dialog plan written to the plan file). Architecture locked: Tier-2 DAL `searchApis(query)` returns id-agnostic `{apiId, apiName}` (local-json raw spec scan, REST a server call — no parse, no ids); Tier-1 frontend `endpointMatchesQuery` over the shared cached parse produces anchor ids. Hand-rolled Cmd/Ctrl+K dialog lists every matching endpoint grouped by API, each deep-linking to `/docs/$apiId#<endpointId>`.
+
+### Entry 020
+- **Tool:** Claude Opus 4.8
+- **Goal:** Review whether the cache-first `useGlobalSearch` is over-engineered
+- **Prompt:** "Can you review the implementation if showing results for cached entries is okay? is it not over-engineered?"
+- **Outcome:** Agreed it was over-engineered. The hand-rolled cache-first partition (`queryClient.getQueryData` + manual dedupe) duplicated what TanStack Query's `useQueries` already does: keyed by the shared `endpointsQueryOptions`, it returns cached parses instantly (no refetch/re-parse) and parses misses once into the same cache the docs page reuses. The manual read was also non-reactive. Simplified to `useApiSearch` (Tier-2) → `useQueries` over matched ids → `endpointMatchesQuery` filter; ~75 → ~55 lines, no imperative cache read. Both original constraints still hold (no third parse; cache reused if present). Verified: type-check 0, lint 0 errors, 53 tests pass.
+
+### Entry 021
+- **Tool:** Claude Opus 4.8
+- **Goal:** Replace tiny/inconsistent unicode glyph icons app-wide
+- **Prompt:** "This icon is not good. it is very small. Can we better set of icons all over app?"
+- **Outcome:** Added `lucide-react` (verified package identity — `lucide.dev`, `lucide-icons/lucide`, ISC; v1.17.0 is legit, just past the model's training cutoff). Replaced the glyphs (`⌕`, `◌`, `⚠`) and CopyLinkButton's hand-drawn SVGs with lucide icons (`Search`, `Inbox`, `AlertTriangle`, `Link2`/`Check`) in the search trigger/dialog, `EmptyState`, `ErrorState`, and `CopyLinkButton`. Bundle +0.76 kB gzip (tree-shaken). Verified: type-check 0, lint 0 errors, 53 tests pass, build ~103 kB gzip.
+
+### Entry 022
+- **Tool:** Claude Opus 4.8
+- **Goal:** Note a manual edit + recover broken commit history
+- **Prompt:** "I have changed to 500ms"
+- **Outcome:** Acknowledged the user's manual `useDebouncedValue` default change (300→500ms) and folded it into the search-hooks commit. While committing, caught that an earlier commit had captured only a file rename (0 content) — leaving HEAD in a broken mixed state (`index.ts` still importing the old `searchEndpoints` while committed hooks already called `searchApis`); only the working tree type-checked. Recovered with `git reset --soft` to the pre-session base and recommitted the whole pass as 8 clean, individually-consistent atomic commits (dal → matcher → hooks → deps → icons → dialog → shell → tests). Final HEAD: type-check 0, lint 0 errors, 53 tests pass, no stray old refs, clean tree.
