@@ -1,14 +1,43 @@
 import { useMemo } from 'react'
 import { Link, useParams } from '@tanstack/react-router'
-import { useApis, useApiEndpoints } from '../hooks/use-catalog'
+import {
+  useApi,
+  useApiDocs,
+  useApiEndpoints,
+  useApis,
+  useErrorReference,
+} from '../hooks/use-catalog'
 import { useDocsUiStore } from '../store'
 import { groupEndpoints } from '../lib/group-endpoints'
 import { MethodBadge } from '../../../components/MethodBadge'
 
+/** Top-level TOC link to a non-endpoint page section (Getting Started, Errors, SDKs). */
+function SectionLink({
+  apiId,
+  hash,
+  children,
+}: {
+  apiId: string
+  hash: string
+  children: React.ReactNode
+}) {
+  return (
+    <Link
+      to="/docs/$apiId"
+      params={{ apiId }}
+      hash={hash}
+      className="block rounded px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+    >
+      {children}
+    </Link>
+  )
+}
+
 /**
  * Persistent navigation: lists every registered API and, for the active one,
- * a table-of-contents of its endpoints (grouped by resource) with hash links.
- * The active endpoint comes from the docs store (set by the page's scroll-spy).
+ * a table-of-contents — Getting Started, endpoints grouped by resource, Error
+ * Reference, and SDKs — with hash links. The active endpoint comes from the docs
+ * store (set by the page's scroll-spy).
  */
 export function Sidebar() {
   const apis = useApis()
@@ -22,6 +51,16 @@ export function Sidebar() {
   )
   const groups = useMemo(() => groupEndpoints(endpoints), [endpoints])
   const activeEndpointId = useDocsUiStore((s) => s.activeEndpointId)
+
+  // Only surface a section's TOC link when that API actually has the content
+  // (cached — the docs page reads the same queries). A minimal API with just an
+  // openapi.json shows no Getting Started / Errors / SDK links.
+  const docs = useApiDocs(activeApiId ?? '')
+  const detail = useApi(activeApiId ?? '')
+  const errors = useErrorReference(activeApiId ?? '')
+  const hasDocs = Boolean(docs.data)
+  const hasErrors = (errors.data?.length ?? 0) > 0
+  const hasSdks = (detail.data?.sdks?.length ?? 0) > 0
 
   return (
     <nav
@@ -52,8 +91,14 @@ export function Sidebar() {
                 {api.name}
               </Link>
 
-              {isActive && groups.length > 0 ? (
+              {isActive ? (
                 <div className="mt-1 space-y-3 border-l border-slate-200 pl-2">
+                  {hasDocs ? (
+                    <SectionLink apiId={api.id} hash="getting-started">
+                      Getting Started
+                    </SectionLink>
+                  ) : null}
+
                   {groups.map((group) => (
                     <div key={group.resource}>
                       <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
@@ -82,6 +127,17 @@ export function Sidebar() {
                       </ul>
                     </div>
                   ))}
+
+                  {hasErrors ? (
+                    <SectionLink apiId={api.id} hash="error-reference">
+                      Error Reference
+                    </SectionLink>
+                  ) : null}
+                  {hasSdks ? (
+                    <SectionLink apiId={api.id} hash="sdks">
+                      SDKs &amp; Libraries
+                    </SectionLink>
+                  ) : null}
                 </div>
               ) : null}
             </li>

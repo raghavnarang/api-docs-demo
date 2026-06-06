@@ -6,6 +6,9 @@ import { useDocsUiStore } from '../store'
 import { QueryBoundary } from '../../../components/QueryBoundary'
 import { EmptyState } from '../../../components/EmptyState'
 import { EndpointSection } from './EndpointSection'
+import { GettingStarted } from './GettingStarted'
+import { ErrorReference } from './ErrorReference'
+import { SdkLinks } from './SdkLinks'
 
 /**
  * Scroll-per-API documentation page: API header + every endpoint rendered from
@@ -62,21 +65,32 @@ export function ApiDocsPage({ apiId }: { apiId: string }) {
         )}
       </QueryBoundary>
 
-      <QueryBoundary
-        query={endpointsQuery}
-        isEmpty={(list) => list.length === 0}
-        empty={<EmptyState title="No endpoints in this spec" />}
-      >
-        {(list) => (
-          <div>
-            {list.map((endpoint) => (
-              <EndpointSection key={endpoint.id} endpoint={endpoint} />
-            ))}
-            {/* Marker for scroll-spy: lets the last endpoint activate at page bottom. */}
-            <div id={DOCS_BOTTOM_SENTINEL_ID} aria-hidden className="h-px" />
-          </div>
-        )}
-      </QueryBoundary>
+      <GettingStarted apiId={apiId} />
+
+      <section id="endpoints" className="scroll-mt-20">
+        <h2 className="border-t border-slate-200 pt-8 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Endpoints
+        </h2>
+        <QueryBoundary
+          query={endpointsQuery}
+          isEmpty={(list) => list.length === 0}
+          empty={<EmptyState title="No endpoints in this spec" />}
+        >
+          {(list) => (
+            <div>
+              {list.map((endpoint) => (
+                <EndpointSection key={endpoint.id} endpoint={endpoint} />
+              ))}
+            </div>
+          )}
+        </QueryBoundary>
+      </section>
+
+      <ErrorReference apiId={apiId} />
+      <SdkLinks apiId={apiId} />
+
+      {/* Marker for scroll-spy: lets the last section activate at page bottom. */}
+      <div id={DOCS_BOTTOM_SENTINEL_ID} aria-hidden className="h-px" />
     </div>
   )
 }
