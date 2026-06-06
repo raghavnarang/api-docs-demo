@@ -153,3 +153,8 @@
   - **Verified:** 34/34 tests, type-check 0, lint 0 errors, build ~99 KB gzip.
   - **Deferred:** Cmd+K search, Getting Started markdown, SDK links, error reference.
   - **Plan snapshot:** [plans/plan-v6.md](plans/plan-v6.md).
+
+### Entry 016
+- **Tool:** Claude Opus 4.8
+- **Prompt:** "Add clickable Link icon besides endpoint to copy it's hashed included link"
+- **Outcome:** Added a reusable `CopyLinkButton` (`src/components/CopyLinkButton.tsx`) that copies a deep link to the on-page anchor (`{origin}{pathname}#{anchorId}`) with a link→check icon swap and brief "Copied!" feedback; fails quietly when the clipboard API is unavailable. Wired it beside the path in each `EndpointSection` header. Added a test mocking `navigator.clipboard.writeText`. Verified: 35/35 tests, type-check 0, lint 0 errors.
