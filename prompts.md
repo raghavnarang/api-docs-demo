@@ -104,3 +104,52 @@
   - Seed data? → **PokéAPI + stub-payments** (deferred)
   - Handle composition keywords now? → **Add allOf + oneOf/anyOf + map** (close the financial-API gap before UI)
 - **Outcome:** Clarified the real gap: spec-parser keeps `contentTypes`/status text but throws away the actual body/response **schemas** needed for field tables. User scoped this pass to **spec-parser only**. Extended `parseOpenApiSpec` with a recursive, `$ref`-resolved `SchemaNode` (flat `required` per property, ordered `properties`, array `items`, `circular` cycle-cut, prefer-JSON content selection) on `requestBody.schema` + each `response.schema` — purely additive. After a robustness review (anyOf/allOf/oneOf are common in real financial specs and were silently rendering blank), added composition handling: `allOf` merge (de-dupe + union required), `oneOf`/`anyOf` → `variants[]` + `composition` tag, `additionalProperties` map marker, OpenAPI 3.1 array-type collapse, and path-item `$ref` deref. Added `src/lib/spec-parser.test.ts` (15 cases: back-compat, inline body, `$ref` response, arrays, nesting, cycle guard, `required[]`, metadata carry-through, content-type selection, graceful unresolvable `$ref`, allOf merge, oneOf/anyOf variants, additionalProperties, 3.1 array type, path-item `$ref`). Snippet-generator confirmed out of scope (Sandbox §2.3). Verified: 15/15 tests pass, type-check 0, lint 0 errors. UI deferred to next pass. Plan snapshot → [plans/plan-v5.md](plans/plan-v5.md).
+
+### Entry 015
+- **Tool:** Claude Opus 4.8
+- **Goal:** Build the core API Catalogue & Documentation UI (§2.2) — shell, sidebar TOC, scroll-per-API docs page rendered from the spec, states, badges, caching, seed data
+- **Prompts (verbatim, in order):**
+  1. "what are these validation constraints?"
+  2. "Continue the UI Plan"
+  3. "Here is one of the OpenAPI spec for TCG Pokemon Card Game https://api.apis.guru/v2/specs/tcgdex.net/2.0.0/openapi.json"
+  4. "I think I have found pokeapi spec
+
+     https://gist.githubusercontent.com/NiccoMlt/073b18934a6001fc5a2414c590e3b8ba/raw/e85c7a1012530defb41978589ffa4342f1297230/openapi.yaml"
+  5. "Before commiting can you explain me in which format we are parsing the openapi spec, and why?"
+  6. "You mentioned that DAL is returning the parsed EndpointDef/SchemaNode. What if we provide OpenAPI Spec via DAL, and frontend should parse that?
+
+     Asking because future rest apis will have less load parsing the openAPI spec on each request, or maintaining a parsed version, or cache the parsed versions. WDYT?"
+  7. "We can come on client side cache later. lets suppose we are using rest api, if we are parsing on client side, what should be the response from backend for search API? currently DAL is providing the parsed entries for search? little confused here"
+  8. "Wait, as we have already discussed if getSpec is already providing us the full openAPI Spec json. I think we should search on frontend, because ids are also getting created on frontends.
+
+     I am thinking of two types of searches, one on frontend level, which can happen on per API level only. One for backend (behind DAL), which responds with which api has that full text keyword in endpoint, description or param. then frontend redirect to that API page, and hit frontend level search for API that I have mentioned for first search type.
+
+     As we have OpenAPI file already available, then we can search on per API basis, for overall basis, backend can redirect us to the API and frontend can do search localy. WDYT? is it okay?"
+  9. "We must also cache the parsed openAPI spec, so that next call must not parse the api again (for local-json). and for separate backend, caching can be flushed after a specific interval, so that if any new changes on backend, it can be refreshed."
+  10. "I also want to kill the third dup parse at single API tier search, when we will implement 2-tier search"
+  11. "why same kind of schema in the selection?"
+  12. "Scroll spy's intersection observer is not working correctly, when clicked on an endpoint, sometimes the active background goes above or below, not at the clicked one"
+  13. "doesnt onScroll and get BoundingClient Rect have negative impact on performance?"
+  14. "Can we not achieve same thing with intersectionObserver?"
+  15. "When I land directly at API page, it is giving null as active element"
+  16. "This is not the issue, please revert. Even when I scroll the active id is null. Only it works when I come from docs page to api. when I refresh app on API page, it is not working active is always null, even on scrolling"
+  17. "it works, but it looks hacky :P cannot we do it on some ready js event?"
+  18. "why extra cleanup useEffect, Cannot we move the cleanup in previous useEffect?"
+- **Polls (AskUserQuestion):**
+  - Scope this pass? → **Core docs first** (defer Cmd+K search, Getting Started markdown, SDK links, error reference)
+  - Extend parser for display fields? → **Add constraints/readOnly/discriminator now**
+  - Seed data? → initially hand-authored, then (prompts 3–4) user supplied real specs → **real PokéAPI (gist YAML→JSON) + real TCGdex (apis.guru) + hand stub-payments**, vendored as JSON
+  - Spec loading? → **vendor JSON into repo**
+  - Scroll-spy impl? → **IntersectionObserver + bottom sentinel** (after rejecting scroll-listener as too heavy and rAF-retry as hacky)
+- **Outcome:** Shipped the core, fully spec-driven Catalogue & Documentation UI. Breakdown:
+  - **Parser:** added validation constraints + `readOnly`/`writeOnly` + `discriminator` to `SchemaNode`; added a unique-endpoint-id guard (real specs omit/dupe operationIds — TCGdex had 31/33 null).
+  - **Shared primitives (`components/`):** HTTP colour conventions + Method/Status badges; Skeleton/Empty/Error states; `QueryBoundary` (standardizes the three states); `ParamsTable`; recursive `SchemaViewer` (nested/array/oneOf-variants/map/readOnly/circular/rules cell).
+  - **Routing/shell:** pathless `AppShell` layout + sidebar TOC; `/`→`/docs` redirect; catalogue grid; `/docs/$apiId` scroll page with anchored `EndpointSection`s + hash navigation.
+  - **Caching:** `useApiEndpoints` parses the raw spec once and caches it via TanStack Query (TTL `Infinity` for static local-json, finite for REST) — removes the double parse.
+  - **Scroll-spy:** IntersectionObserver + bottom sentinel, **co-located in `ApiDocsPage`** (publishes active id to a small zustand store the sidebar reads) — fixes the hard-refresh DOM-readiness race without polling.
+  - **Seed:** vendored real PokéAPI (96 GET) + TCGdex (33 GET, `$ref`-heavy) + hand-authored stub-payments (POST/DELETE, oneOf+discriminator+constraints), all three registered; `resolveJsonModule` enabled.
+  - **Search decisions (deferred pass):** raw spec from DAL + client parse; two-tier search (frontend per-API + DAL API-level `searchApis`, id-agnostic since anchor ids are frontend-authoritative); Tier-1 reuses the cached `useApiEndpoints` (no third parse).
+  - **Tests:** conventions, SchemaViewer, EndpointSection, QueryBoundary, group-endpoints (34 total).
+  - **Verified:** 34/34 tests, type-check 0, lint 0 errors, build ~99 KB gzip.
+  - **Deferred:** Cmd+K search, Getting Started markdown, SDK links, error reference.
+  - **Plan snapshot:** [plans/plan-v6.md](plans/plan-v6.md).
