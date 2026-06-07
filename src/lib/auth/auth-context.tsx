@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import type { AuthProvider, AuthSession, SignInCredentials } from './types'
 import { getAuthProvider } from './auth-source'
 
@@ -26,6 +27,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthContextProvider({ children }: { children: ReactNode }) {
   const provider: AuthProvider = useMemo(() => getAuthProvider(), [])
+  const queryClient = useQueryClient()
   const [session, setSession] = useState<AuthSession | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -51,9 +53,16 @@ export function AuthContextProvider({ children }: { children: ReactNode }) {
         await provider.signIn(credentials)
       },
       signUp: (credentials) => provider.signUp(credentials),
-      signOut: () => provider.signOut(),
+      signOut: async () => {
+        await provider.signOut()
+        // Drop all cached server state so a different account signing in on the
+        // same browser can't read the previous user's data (e.g. their key
+        // list). localStorage is left intact — it's the mock backend, scoped
+        // per owner, and must persist across sessions like a real API.
+        queryClient.clear()
+      },
     }),
-    [provider, session, loading],
+    [provider, session, loading, queryClient],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
