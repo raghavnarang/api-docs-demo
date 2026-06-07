@@ -4,7 +4,7 @@ type Orientation = 'horizontal' | 'vertical'
 
 const labelClasses: Record<Orientation, string> = {
   horizontal: 'flex items-center gap-2 text-sm text-slate-600',
-  vertical: 'flex flex-col gap-1 text-sm',
+  vertical: 'flex w-full flex-col gap-1 text-sm',
 }
 
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
@@ -35,7 +35,7 @@ export function Select({
     <select
       {...props}
       id={selectId}
-      className={`rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-400 ${className}`}
+      className={`w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-400 ${className}`}
     >
       {children}
     </select>
