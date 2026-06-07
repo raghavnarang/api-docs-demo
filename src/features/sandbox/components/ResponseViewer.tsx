@@ -45,7 +45,7 @@ export function ResponseViewer({
       <ErrorState
         title="Request failed"
         error={mutation.error}
-        onRetry={() => mutation.reset()}
+        onRetry={() => mutation.variables && mutation.mutate(mutation.variables)}
       />
     )
   }
