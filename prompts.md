@@ -471,3 +471,39 @@ More info in prompts.md and plan folder. attaching pdf for full project context"
 - **Prompt:** "log prompts and commit and push"
 - **Outcome:** Logged entries 058–061, committed ARCHITECTURE.md + prompts.md as atomic Conventional Commits, pushed to `main`.
 
+### Entry 062
+- **Tool:** Claude Sonnet 4.6
+- **Goal:** Add responsive hamburger menu with slide-in sidebar for mobile
+- **Prompt:** "Can we make the sidebar responsive by adding a hamburger menu, and making sidebar to slide in"
+- **Outcome:** Added `useSidebarUiStore` to store.ts. AppShell: hamburger button (md:hidden) in header toggles mobile drawer; fixed sidebar remains for desktop; backdrop overlay closes drawer on tap; Escape closes both search and sidebar. Sidebar: `onClick` on `<nav>` closes mobile drawer on any link click.
+
+### Entry 063
+- **Tool:** Claude Sonnet 4.6
+- **Goal:** Fix overflowing CTAs on endpoint section and API header on mobile
+- **Prompt:** "Lets fix other responsive aspect like the endpoint component with CTA and copy link displaying wrongly. See screenshot.\n\nAlso in another screenshot CTAs overflowing the view port"
+- **Outcome:** ApiDocsPage header: changed outer flex to `flex-col` on mobile / `sm:flex-row sm:justify-between` so title and CTAs stack instead of overflowing; removed `shrink-0`. EndpointSection: grouped badge/path/copy-link in inner div with `min-w-0 truncate`; parent uses `justify-between gap-x-4 gap-y-2` — removed orphaned `ml-auto` that floated "Try in sandbox" to the right edge when wrapped.
+
+### Entry 064
+- **Tool:** Claude Sonnet 4.6
+- **Goal:** Fix sandbox select dropdowns overflowing their container
+- **Prompt:** "also fix the overflowing of select dropdowns on sandbox"
+- **Outcome:** Added `w-full` to the `<select>` element and `w-full` to the vertical `<label>` wrapper in the shared `Select` primitive. Selects now fill their grid cell across sandbox, keys form, and analytics filter.
+
+### Entry 065
+- **Tool:** Claude Sonnet 4.6
+- **Goal:** Fix sandbox retry button hiding error instead of resending request
+- **Prompt:** "clicking retry in sandbox failed request hides the error component, not actually retry sending request"
+- **Outcome:** Fixed `onRetry` in `ResponseViewer` — was calling `mutation.reset()` (clears to idle) instead of `mutation.mutate(mutation.variables)` which re-fires the last request.
+
+### Entry 066
+- **Tool:** Claude Sonnet 4.6
+- **Goal:** Make "Developer Portal" header text navigate to home
+- **Prompt:** "Clicking developer portal in header should take to home page '/'"
+- **Outcome:** Replaced `<span>` with TanStack Router `<Link to="/">` in AppShell header. Added subtle `hover:text-blue-600` style.
+
+### Entry 067
+- **Tool:** Claude Sonnet 4.6
+- **Goal:** Log prompts, atomic commits, push
+- **Prompt:** "lets log the prompts and do atomic commits and push"
+- **Outcome:** Logged entries 062–067, committed each logical change as its own Conventional Commit, pushed to `main`.
+
