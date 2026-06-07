@@ -156,6 +156,10 @@ src/
     └── config.ts             # adapter selection (authProvider, dataSource)
 ```
 
+## Architecture
+
+For a deeper look at why things are built the way they are — the DAL and Auth provider abstractions, the typed adapter registries, sandbox-always-REST, two-tier search, and per-feature layering — see [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ## Tech stack decisions
 
 | Concern          | Choice                      | Reason                                                                 |
