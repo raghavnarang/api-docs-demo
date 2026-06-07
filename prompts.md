@@ -328,3 +328,67 @@ get_rarities_rarity_"
   - Scope? → **Per-key selector** (key dropdown from `useApiKeys` + 7d/30d toggle, per §2.5 wording)
 - **Outcome:** Planned (→ [plans/plan-v9.md](plans/plan-v9.md)) and built the full §2.5 feature, fully data-source-agnostic, mirroring the §2.4 Keys architecture. **DAL:** added `UsageWindow`/`UsageSummary`/`UsageTimePoint`/`EndpointUsage`/`UsageReport` types, the `UsageAnalyticsRepository` contract (token-based identity, same boundary as keys), `DataSource.analytics`, and a `queryKeys.analytics` namespace. **local-json:** `analytics-store.ts` — deterministic mock generator (xfnv1a hash → mulberry32 PRNG seeded on `owner:keyId:window`); builds a 7/30-day series, aggregates the summary (errors split 4xx/5xx, call-weighted avg latency), and distributes calls across endpoints `extractEndpoints` pulls from the registered specs (one method/path per path) so the breakdown reconciles exactly to total calls and reflects real APIs with no hardcoded endpoint data. Wired into the provider via `resolveOwner` (reused); `mock` inherits automatically. **Feature hook:** `use-analytics.ts` (`useKeyUsage(keyId, window)` — token as fetch identity, `user.id` only as cache partition). **UI:** `UsageAnalyticsPage` (loading/empty/error states; no-keys empty state links to `/keys`; key `<select>` + 7d/30d segmented toggle; `QueryBoundary`) orchestrating `MetricCards`, `UsageChart` (`React.lazy`+`Suspense` so Recharts is its own chunk) → `UsageChartImpl` (Recharts calls-vs-errors line chart), and `EndpointBreakdownTable` (reuses `MethodBadge`). **Routing/nav:** new protected `/analytics` route + sidebar Portal link (`BarChart3`). **Tests:** `analytics-store.test.ts` (determinism, window length, date format/order, summary+endpoint reconciliation, registry-default, `extractEndpoints`) + `UsageAnalyticsPage.test.tsx` (empty/populated states, window-toggle re-query). Verified: type-check 0, lint 0 errors, 133 tests pass (12 new), build green — Recharts code-split into its own lazy chunk (~108 KB gzip), main bundle unchanged (~234 KB gzip); dev boots HTTP 200. Left the unrelated pre-existing `UserMenu.tsx` tweak untouched.
 
+### Entry 040
+- **Tool:** Claude Opus 4.8
+- **Goal:** Plan + build §2.6 API Status Page on the swappable DAL (local-json, mocked), TanStack Query unaware of the source
+- **Prompt:** "Lets plan and create another feature, API Status Page. Check section 2.6 for requirements\n\nLets use mocked data under local-json DAL provider\n\nMore info in prompts.md and plan folder. attaching pdf for full project context"
+- **Polls (AskUserQuestion):**
+  - Route access? → **Public** (under `appLayoutRoute` like `/docs`)
+  - Uptime UI? → **90-cell uptime bar + %** (statuspage.io style, deterministic daily series)
+  - Banner behavior? → **Dismissible per-session**, site-wide when any API is degraded/outage
+- **Outcome:** Explored the analytics/keys DAL pattern, wrote an approved plan, and built the first cut: `ApiStatusRepository` (no token — status is global infra health, not user-scoped, mirroring `ApiCatalogRepository`), `status-store.ts` (seeded per `apiId` — health, 90-day uptime series, incident feed), `healthColor()` added to the shared HTTP colour convention, `useStatusOverview` hook, a single all-APIs `StatusPage`, and a site-wide `IncidentBanner` mounted in `AppShell`. This first shape used one `getStatusOverview()` call feeding both the page and the banner — revised immediately after (Entry 041).
+
+### Entry 041
+- **Tool:** Claude Opus 4.8
+- **Goal:** Re-shape the contract to per-API status pages + a separate banner source
+- **Prompt:** "Wait, have not we agreed on per api based status at a time? you are returning all of them at once?" → (poll) "I want dedicated status page for every api. For degraded message or any kind of banner message across website must be fetched from a different API call. It can include anything, including degrade of an API"
+- **Outcome:** Explained why an all-APIs overview was the first instinct (the page lists every service; the banner must scan all), then refactored to the requested two-call design. **Contract:** `getApiStatus(apiId)` (per-API; null for unknown) + `getStatusBanner()` (a *separate* site-wide message source — `StatusBannerMessage[]` with `level`/`message`/`apiId`). **Store:** `getApiStatus` builds one API's status; `getStatusBanner` derives messages from the same per-API seeds (cheap health-only derivation) so banner and pages stay consistent without coupling. **Query keys:** `status.api(apiId)` + `status.banner()`. **Hooks:** `useApiStatus(apiId)` + `useStatusBanner()`. **UI:** dedicated `/status/$apiId` page (single `ApiStatusCard`) + a `/status` index. Banner now reads only `useStatusBanner`. Bundled seeds: pokeapi degraded, tcgdex outage, stub-payments operational. type-check 0, lint 0, 151 tests pass.
+
+### Entry 042
+- **Tool:** Claude Opus 4.8
+- **Goal:** Stop the index from fetching each API's status; surface status from each API's own context
+- **Prompt:** "StatusIndexRow is using useAPIStatus which defeats the purpose of calling status of API on their own status page. Also it is opening api's sidebar section, but their is not any API status on sidebar, lets have a item in sidebar, and also on API docs page near title"
+- **Outcome:** Simplified the index to a single catalogue query (`useApis`) listing APIs as links — no per-API status fetch; health/uptime is fetched only on the dedicated page. Added an "API Status" link inside the active API's sidebar TOC section (→ `/status/$apiId`) and a "View status" link next to the API title on the docs page.
+
+### Entry 043
+- **Tool:** Claude Opus 4.8
+- **Goal:** Match the API Status sidebar sub-item to the other TOC links
+- **Prompt:** "API Status must not have icon like other sub menu items, and lets keep it below the getting started sub menu item"
+- **Outcome:** Removed the icon and moved the sidebar "API Status" link directly below Getting Started, styled like the other plain-text `SectionLink`s.
+
+### Entry 044
+- **Tool:** Claude Opus 4.8
+- **Goal:** Fix the banner's look and make it stay fixed on scroll
+- **Prompt:** "banner is not looking well / Icon is small and not centered, dismiss cross is not centered / banner should not hide on scroll it should be fixed like site header"
+- **Outcome:** First attempt (later reverted, Entry 045): converted `AppShell` to a full-viewport flex `h-screen` shell (non-scrolling top region, independently scrolling sidebar + main) so the banner stayed fixed with no sticky-offset maths; centred the icon (`h-5 w-5`, `items-center`) and the dismiss button (`grid place-items-center`). A first pass had used a JS `ResizeObserver` to measure the sticky top — dropped on the next prompt in favour of pure CSS.
+
+### Entry 045
+- **Tool:** Claude Opus 4.8
+- **Goal:** Revert the shell change (it broke scroll-spy) and render the banner in the content area
+- **Prompt:** "By current app shell change, scroll spy is not correctly working, lets revert the change, and try to render the banner below the header, in the content area above the page content. In screenshot, above API catalogue. Make it nice with rounded border"
+- **Outcome:** Reverted `AppShell` to the original sticky layout (header `sticky top-0`, sidebar `sticky top-14`, window scroll) — scroll-spy works again. Moved `<IncidentBanner />` inside `<main>` above `<Outlet />` and restyled it as a `rounded-lg border` alert card with its own `px-6 pt-6` spacing; returns `null` (no leftover gap) when there are no messages.
+
+### Entry 046
+- **Tool:** Claude Opus 4.8
+- **Goal:** Scope the sidebar TOC to the docs route + redesign the incident feed like a statuspage timeline
+- **Prompt:** "lets not open the sidebar section on API Status page, it should open only for doc/catalog UI page. Also I have removed the sidebar's API Status link. Lets keep the view status on docs page. And lets make the incidents look clean like the screenshot, with empty incident days as well"
+- **Outcome:** Switched the sidebar's active-API detection from `useParams({strict:false})` to `useMatchRoute({ to: '/docs/$apiId' })`, so `/status/$apiId` no longer expands a catalogue section (shared param name). Kept the docs-page "View status" link; the user had already removed the per-section sidebar link. Added an `IncidentUpdate` type (status/body/timestamp) and an `updates[]` timeline to `StatusIncident` (dropped `resolutionNote`); the store now generates Investigating → optional Monitoring → Resolved updates and places all incidents inside a recent 14-day window. Rebuilt `IncidentFeed` as a day-grouped timeline (14 day headers, newest first; each day lists its incidents with update entries + UTC timestamps, or "No incidents reported."). Updated tests/fixtures accordingly. type-check 0, lint 0, 151 tests pass.
+
+### Entry 047
+- **Tool:** Claude Opus 4.8
+- **Goal:** Persist banner dismissal so it doesn't reappear on the next reload
+- **Prompt:** "When the banner is dismissed it should not come immediately, on next app reload. Maybe after some time. Can we use session storage, if available"
+- **Outcome:** Persisted dismissal in `sessionStorage` (try/catch-guarded for private mode / SSR) — survives reloads within the tab session, clears when the session ends. First version keyed the dismissal to the message-set signature so a new incident would reappear (simplified next, Entry 048).
+
+### Entry 048
+- **Tool:** Claude Opus 4.8
+- **Goal:** Simplify the dismissal to a plain hide/show
+- **Prompt:** "Hey dont make it too complex. lets only do hide and show banner, thats it. not dismiss the ones that were shown already."
+- **Outcome:** Reduced the dismissal to a single session boolean in `sessionStorage` — dismiss hides the banner for the session, returns in a new session; no per-message tracking. Updated the persistence test. type-check 0, lint 0, 152 tests pass.
+
+### Entry 049
+- **Tool:** Claude Opus 4.8
+- **Goal:** Confirm the mock's incident volume/recency, then commit + push + log
+- **Prompts:** "how many incidents the local-json's status store will build?" / "and are they mapped to recent days" / "commit and push" / "yes" (log prompts)
+- **Outcome:** Clarified the mock generates 1–3 incidents per API (seeded per `apiId`; 7 total for the bundled three: pokeapi 3, tcgdex 1, stub-payments 3), all mapped to the recent 14-day feed window (active 0–2 days ago, resolved 1–13) while the 90-day uptime bar dips only on those recent incident days. Committed the feature as 3 atomic Conventional Commits (DAL contract + provider → pages/banner/route/nav → tests) and pushed to `main`; left the unrelated pre-existing `UserMenu.tsx` change untouched. Logged entries 040–049.
+
