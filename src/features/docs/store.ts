@@ -31,3 +31,15 @@ export const useSearchUiStore = create<SearchUiState>((set) => ({
   setOpen: (open) => set({ open }),
   toggle: () => set((s) => ({ open: !s.open })),
 }))
+
+interface SidebarUiState {
+  open: boolean
+  setOpen: (open: boolean) => void
+  toggle: () => void
+}
+
+export const useSidebarUiStore = create<SidebarUiState>((set) => ({
+  open: false,
+  setOpen: (open) => set({ open }),
+  toggle: () => set((s) => ({ open: !s.open })),
+}))

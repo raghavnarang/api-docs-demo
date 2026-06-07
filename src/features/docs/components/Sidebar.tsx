@@ -14,7 +14,7 @@ import {
   useApis,
   useErrorReference,
 } from '../hooks/use-catalog'
-import { useDocsUiStore } from '../store'
+import { useDocsUiStore, useSidebarUiStore } from '../store'
 import { groupEndpoints } from '../lib/group-endpoints'
 import { MethodBadge } from '../../../components/MethodBadge'
 
@@ -61,6 +61,7 @@ export function Sidebar() {
   )
   const groups = useMemo(() => groupEndpoints(endpoints), [endpoints])
   const activeEndpointId = useDocsUiStore((s) => s.activeEndpointId)
+  const closeSidebar = useSidebarUiStore((s) => s.setOpen)
 
   // Only surface a section's TOC link when that API actually has the content
   // (cached — the docs page reads the same queries). A minimal API with just an
@@ -76,6 +77,7 @@ export function Sidebar() {
     <nav
       className="flex h-full flex-col overflow-y-auto px-3 py-4"
       aria-label="API navigation"
+      onClick={() => closeSidebar(false)}
     >
       <Link
         to="/docs"
