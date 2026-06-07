@@ -46,7 +46,7 @@ export function ApiDocsPage({ apiId }: { apiId: string }) {
       <QueryBoundary query={api} empty={<EmptyState title="API not found" />}>
         {(detail) => (
           <header className="border-b border-slate-200 pb-6">
-            <div className="flex items-baseline justify-between gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between">
               <div className="flex items-baseline gap-3">
                 <h1 className="text-2xl font-bold text-slate-900">
                   {detail.name}
@@ -55,7 +55,7 @@ export function ApiDocsPage({ apiId }: { apiId: string }) {
                   v{detail.version}
                 </span>
               </div>
-              <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Link
                   to="/changelog"
                   search={{ api: apiId }}

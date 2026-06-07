@@ -28,14 +28,18 @@ export function EndpointSection({
       id={endpoint.id}
       className="scroll-mt-20 border-t border-slate-200 py-8"
     >
-      <div className="group flex flex-wrap items-center gap-2">
-        <MethodBadge method={method} />
-        <code className="font-mono text-sm text-slate-800">{path}</code>
-        <CopyLinkButton anchorId={endpoint.id} />
+      <div className="group flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <MethodBadge method={method} />
+          <code className="min-w-0 truncate font-mono text-sm text-slate-800">
+            {path}
+          </code>
+          <CopyLinkButton anchorId={endpoint.id} />
+        </div>
         <Link
           to="/sandbox"
           search={{ api: apiId, endpoint: endpoint.id }}
-          className="ml-auto inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-blue-600"
+          className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-blue-600"
         >
           <FlaskConical className="h-3.5 w-3.5" aria-hidden />
           Try in sandbox
