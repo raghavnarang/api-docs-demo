@@ -447,3 +447,27 @@ More info in prompts.md and plan folder. attaching pdf for full project context"
 - **Prompt:** "continue"
 - **Outcome:** Appended entries 054–057 to prompts.md, committed the refactor as a single Conventional Commit, and pushed to `main`.
 
+### Entry 058
+- **Tool:** Claude Sonnet 4.6
+- **Goal:** Create ARCHITECTURE.md covering all architectural decisions, with emphasis on DAL and Auth abstractions
+- **Prompt:** "Check the prompts.md and plans. And create a new md doc for architecture, why they are chosen, I want to specially mentione the abstraction of DAL and Auth Providers. Plus all of the architecture decisions"
+- **Outcome:** Created `ARCHITECTURE.md` covering stack choices, DAL abstraction (contracts, registry, adapters, identity boundary), Auth abstraction (provider contract, registry, context, route guard), typed `appConfig` as single source of truth, TanStack Query as DAL client, sandbox always-REST rationale, API registry drop-in pattern, spec parser design decisions, two-tier search architecture, code splitting (CodeMirror + Recharts), and per-feature layered pattern.
+
+### Entry 059
+- **Tool:** Claude Sonnet 4.6
+- **Goal:** Add a "Why This Architecture" summary with benefits table
+- **Prompt:** "A little summary is also needed on why, and what are the benefits of doing so"
+- **Outcome:** Added "Why This Architecture" section at the top of `ARCHITECTURE.md` with a benefits table mapping each problem to its solution and benefit (backend independence, zero-touch adapter swap, compile-time exhaustive registry, token-based identity boundary, sandbox bypass, shared spec parse cache).
+
+### Entry 060
+- **Tool:** Claude Sonnet 4.6
+- **Goal:** Add why-rationale for two-tier search design
+- **Prompt:** "Also need a small summary for two tier search, why we decided to go that way"
+- **Outcome:** Added a "why" paragraph before the two-tier search table explaining the three constraints: anchor ids are frontend-authoritative (backend can't return them), pure backend search would couple to parser internals, pure frontend search would parse every spec upfront. Two tiers splits coarse (backend/local-json) from precise (client-side anchor match on cached specs).
+
+### Entry 061
+- **Tool:** Claude Sonnet 4.6
+- **Goal:** Log prompts, commit, push
+- **Prompt:** "log prompts and commit and push"
+- **Outcome:** Logged entries 058–061, committed ARCHITECTURE.md + prompts.md as atomic Conventional Commits, pushed to `main`.
+
