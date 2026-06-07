@@ -15,4 +15,9 @@ export const queryKeys = {
     search: (query: string) =>
       [...queryKeys.apis.all, 'search', query] as const,
   },
+  keys: {
+    all: ['keys'] as const,
+    /** `owner` partitions the cache per account (never sent to the DAL). */
+    list: (owner: string) => [...queryKeys.keys.all, 'list', owner] as const,
+  },
 } as const

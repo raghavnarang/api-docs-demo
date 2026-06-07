@@ -1,5 +1,5 @@
 import { appConfig } from '../../app/config'
-import type { ApiCatalogRepository } from './repositories'
+import type { ApiCatalogRepository, ApiKeyRepository } from './repositories'
 import { dataSourceRegistry } from './providers'
 
 /**
@@ -9,6 +9,7 @@ import { dataSourceRegistry } from './providers'
  */
 export interface DataSource {
   catalog: ApiCatalogRepository
+  keys: ApiKeyRepository
 }
 
 export function getDataSource(): DataSource {

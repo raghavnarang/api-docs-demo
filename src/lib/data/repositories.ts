@@ -1,8 +1,11 @@
 import type { OpenAPIV3 } from 'openapi-types'
 import type {
   ApiDetail,
+  ApiKey,
   ApiSearchHit,
   ApiSummary,
+  CreateApiKeyInput,
+  CreatedApiKey,
   ErrorRefEntry,
 } from './types'
 
@@ -30,4 +33,23 @@ export interface ApiCatalogRepository {
    * search endpoint. Callers debounce the query on the client.
    */
   searchApis(query: string): Promise<ApiSearchHit[]>
+}
+
+/**
+ * API Key Management contract (§2.4). Identity flows as the caller's auth
+ * `token` — never an `ownerId`. The adapter resolves the owner behind this
+ * boundary: a REST adapter forwards the token as `Authorization` and lets the
+ * server scope the result; the local-json adapter decodes the token to a stable
+ * owner and partitions localStorage by it. The app never passes a user id.
+ */
+export interface ApiKeyRepository {
+  /** Keys owned by the token's subject. */
+  listKeys(token: string): Promise<ApiKey[]>
+  /**
+   * Mint a new key. The returned `CreatedApiKey` carries the plaintext secret
+   * exactly once — it is never stored and cannot be retrieved again.
+   */
+  createKey(token: string, input: CreateApiKeyInput): Promise<CreatedApiKey>
+  /** Revoke a key (kept in the list with `status: 'revoked'`). */
+  revokeKey(token: string, id: string): Promise<void>
 }

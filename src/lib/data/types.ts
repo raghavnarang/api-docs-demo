@@ -45,3 +45,46 @@ export interface ApiSearchHit {
   apiId: string
   apiName: string
 }
+
+/** Environment a key is scoped to (§2.4). */
+export type ApiKeyEnvironment = 'sandbox' | 'production'
+
+/** Lifecycle status. Revoked keys are kept (greyed) for an audit trail. */
+export type ApiKeyStatus = 'active' | 'revoked'
+
+/**
+ * A managed API key as the app sees it. Deliberately carries no plaintext
+ * secret — only a `maskedKey` (prefix + last-4), mirroring real backends that
+ * store a hash and can never re-reveal the secret. The full secret exists only
+ * on the `CreatedApiKey` returned once at creation time.
+ */
+export interface ApiKey {
+  id: string
+  name: string
+  environment: ApiKeyEnvironment
+  /** e.g. "sk_sandbox_••••••••3f9a" — never the full secret. */
+  maskedKey: string
+  /** ISO timestamp. */
+  createdAt: string
+  /** ISO timestamp, or null when the key has never been used. */
+  lastUsedAt: string | null
+  /** ISO timestamp, or null when the key never expires. */
+  expiresAt: string | null
+  status: ApiKeyStatus
+}
+
+/** Fields the user supplies when creating a key. */
+export interface CreateApiKeyInput {
+  name: string
+  environment: ApiKeyEnvironment
+  /** ISO date, or null/omitted for no expiry. */
+  expiresAt?: string | null
+}
+
+/**
+ * Returned exactly once from `createKey`. Extends `ApiKey` with the plaintext
+ * `secret`, which is shown to the user a single time and never persisted.
+ */
+export interface CreatedApiKey extends ApiKey {
+  secret: string
+}
