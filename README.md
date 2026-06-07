@@ -2,6 +2,9 @@
 
 Extensible API documentation & sandbox platform for external developers. Built with React 18, TypeScript, and Vite. PokéAPI is included as demo data; the architecture is designed so adding a second API requires touching exactly one file.
 
+**Live demo:** [api-docs-demo-72b.pages.dev](https://api-docs-demo-72b.pages.dev/)  
+**Demo video:** [Watch on Google Drive](https://drive.google.com/file/d/1cFKVK5OHEVcOoXLyVkiu1yurn-dho6kD/view?usp=sharing)
+
 ## Prerequisites
 
 - Node.js 20+
