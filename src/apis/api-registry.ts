@@ -1,14 +1,14 @@
 import type { OpenAPIV3 } from 'openapi-types'
-import type { ErrorRefEntry, SdkLink } from '../lib/data/types'
+import type { ChangelogEntry, ErrorRefEntry, SdkLink } from '../lib/data/types'
 
 /**
  * Single source of truth for registered APIs.
  *
  * To add an API: drop an `openapi.json` under `src/apis/<api-name>/`, import it
  * here, and add one entry to `API_REGISTRY`. Optionally colocate `docs.md`
- * (import with `?raw`), an `errors.json`, and SDK links. No component code
- * changes — the portal reads everything from this registry via the DAL's
- * `local-json` adapter.
+ * (import with `?raw`), an `errors.json`, a `changelog.json`, and SDK links. No
+ * component code changes — the portal reads everything from this registry via
+ * the DAL's `local-json` adapter.
  */
 
 export interface ApiDefinition {
@@ -29,6 +29,8 @@ export interface ApiDefinition {
   sdks?: SdkLink[]
   /** Error reference catalogue. */
   errorReference?: ErrorRefEntry[]
+  /** Versioned changelog entries (§2.7), authored newest-first. */
+  changelog?: ChangelogEntry[]
 }
 
 import pokeapiSpec from './pokeapi/openapi.json'
@@ -43,9 +45,14 @@ import pokeapiErrors from './pokeapi/errors.json'
 import tcgdexErrors from './tcgdex/errors.json'
 import stubPaymentsErrors from './stub-payments/errors.json'
 
+import pokeapiChangelog from './pokeapi/changelog.json'
+import tcgdexChangelog from './tcgdex/changelog.json'
+import stubPaymentsChangelog from './stub-payments/changelog.json'
+
 // JSON imports are structurally typed; assert the domain shapes once at the boundary.
 const asSpec = (spec: unknown) => spec as OpenAPIV3.Document
 const asErrors = (errors: unknown) => errors as ErrorRefEntry[]
+const asChangelog = (entries: unknown) => entries as ChangelogEntry[]
 
 export const API_REGISTRY: ApiDefinition[] = [
   {
@@ -58,6 +65,7 @@ export const API_REGISTRY: ApiDefinition[] = [
     spec: asSpec(pokeapiSpec),
     docs: pokeapiDocs,
     errorReference: asErrors(pokeapiErrors),
+    changelog: asChangelog(pokeapiChangelog),
     sdks: [
       {
         lang: 'JavaScript',
@@ -81,6 +89,7 @@ export const API_REGISTRY: ApiDefinition[] = [
     spec: asSpec(tcgdexSpec),
     docs: tcgdexDocs,
     errorReference: asErrors(tcgdexErrors),
+    changelog: asChangelog(tcgdexChangelog),
     sdks: [
       {
         lang: 'JavaScript',
@@ -99,6 +108,7 @@ export const API_REGISTRY: ApiDefinition[] = [
     spec: asSpec(stubPaymentsSpec),
     docs: stubPaymentsDocs,
     errorReference: asErrors(stubPaymentsErrors),
+    changelog: asChangelog(stubPaymentsChangelog),
     sdks: [
       {
         lang: 'JavaScript',

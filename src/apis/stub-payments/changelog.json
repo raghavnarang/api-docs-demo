@@ -1,0 +1,26 @@
+[
+  {
+    "id": "stub-payments-1-0-0",
+    "version": "1.0.0",
+    "date": "2025-03-01",
+    "type": "feature",
+    "title": "General availability of the Payments API",
+    "description": "The Payments API is now GA. Create and retrieve payments, with idempotency-key support on all write endpoints."
+  },
+  {
+    "id": "stub-payments-0-9-0",
+    "version": "0.9.0",
+    "date": "2025-01-18",
+    "type": "breaking",
+    "title": "Switched amount fields to minor units",
+    "description": "Monetary amounts are now expressed as integer minor units (e.g. cents) instead of decimal strings. Update integrations to send and parse integers."
+  },
+  {
+    "id": "stub-payments-0-8-1",
+    "version": "0.8.1",
+    "date": "2024-12-05",
+    "type": "fix",
+    "title": "Resolved duplicate webhook deliveries on retry",
+    "description": "Transient 5xx responses could trigger duplicate payment.succeeded webhooks. Deliveries are now de-duplicated by event id within the retry window."
+  }
+]

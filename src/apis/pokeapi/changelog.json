@@ -1,0 +1,34 @@
+[
+  {
+    "id": "pokeapi-2-0-0",
+    "version": "2.0.0",
+    "date": "2024-11-12",
+    "type": "breaking",
+    "title": "Removed deprecated v1 resource endpoints",
+    "description": "All /api/v1 resource paths have been removed. Migrate to the /api/v2 equivalents, which return paginated list envelopes instead of bare arrays."
+  },
+  {
+    "id": "pokeapi-1-9-0",
+    "version": "1.9.0",
+    "date": "2024-08-03",
+    "type": "feature",
+    "title": "Added Pokémon encounter location areas",
+    "description": "GET /pokemon/{id}/encounters now resolves version-grouped encounter details, including methods, chances, and condition values."
+  },
+  {
+    "id": "pokeapi-1-8-2",
+    "version": "1.8.2",
+    "date": "2024-05-20",
+    "type": "fix",
+    "title": "Corrected sprite URLs for newer generations",
+    "description": "Official-artwork sprite links for Gen 8 and 9 species pointed at a stale CDN host and returned 404s. They now resolve against the current asset domain."
+  },
+  {
+    "id": "pokeapi-1-8-0",
+    "version": "1.8.0",
+    "date": "2024-02-14",
+    "type": "feature",
+    "title": "Introduced consistent list pagination",
+    "description": "List endpoints now accept limit and offset query params and return count, next, and previous fields for stable cursor-style traversal."
+  }
+]

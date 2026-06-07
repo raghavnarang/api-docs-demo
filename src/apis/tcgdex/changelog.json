@@ -1,0 +1,26 @@
+[
+  {
+    "id": "tcgdex-2-0-0",
+    "version": "2.0.0",
+    "date": "2025-01-09",
+    "type": "breaking",
+    "title": "Renamed card image fields to a structured object",
+    "description": "The flat imageUrl string was replaced by an images object exposing low and high resolution variants. Update clients reading card.imageUrl to card.images.high."
+  },
+  {
+    "id": "tcgdex-1-6-0",
+    "version": "1.6.0",
+    "date": "2024-10-27",
+    "type": "feature",
+    "title": "Added multilingual set and series names",
+    "description": "Sets and series now return localized names for all supported languages, selectable via the /v2/{lang} path segment."
+  },
+  {
+    "id": "tcgdex-1-5-1",
+    "version": "1.5.1",
+    "date": "2024-07-15",
+    "type": "fix",
+    "title": "Fixed missing rarity on promo cards",
+    "description": "Promotional cards previously returned a null rarity. They now report the rarity Promo so filtering by rarity behaves consistently."
+  }
+]
