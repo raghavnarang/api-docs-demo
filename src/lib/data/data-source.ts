@@ -2,6 +2,7 @@ import { appConfig } from '../../app/config'
 import type {
   ApiCatalogRepository,
   ApiKeyRepository,
+  ApiStatusRepository,
   UsageAnalyticsRepository,
 } from './repositories'
 import { dataSourceRegistry } from './providers'
@@ -15,6 +16,7 @@ export interface DataSource {
   catalog: ApiCatalogRepository
   keys: ApiKeyRepository
   analytics: UsageAnalyticsRepository
+  status: ApiStatusRepository
 }
 
 export function getDataSource(): DataSource {

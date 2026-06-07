@@ -134,3 +134,73 @@ export interface UsageReport {
   series: UsageTimePoint[]
   endpoints: EndpointUsage[]
 }
+
+/** Per-API health indicator (§2.6). */
+export type ApiHealth = 'operational' | 'degraded' | 'outage'
+
+/** Lifecycle of an incident in the history feed. */
+export type IncidentStatus = 'active' | 'resolved'
+
+/** One timeline entry within an incident (newest first in the feed). */
+export interface IncidentUpdate {
+  /** e.g. "Investigating" | "Identified" | "Monitoring" | "Resolved". */
+  status: string
+  body: string
+  /** ISO timestamp of this update. */
+  timestamp: string
+}
+
+/** One incident in an API's history feed (§2.6). */
+export interface StatusIncident {
+  id: string
+  title: string
+  /** Severity — drives the API's health while the incident is active. */
+  impact: Exclude<ApiHealth, 'operational'>
+  status: IncidentStatus
+  /** ISO timestamp the incident began. */
+  startedAt: string
+  /** ISO timestamp it was resolved, or null while still active. */
+  resolvedAt: string | null
+  /** Status updates, newest first — drives the incident timeline display. */
+  updates: IncidentUpdate[]
+}
+
+/** One day of uptime in the 90-day window. */
+export interface UptimeDay {
+  /** ISO date, `YYYY-MM-DD`. */
+  date: string
+  /** Fraction of the day the API was up, 0..1. */
+  uptime: number
+}
+
+/**
+ * Per-API status (§2.6). Global infra health — NOT user-scoped. Mocked behind
+ * the DAL today; a REST adapter would return the same shape from a status API.
+ */
+export interface ApiStatus {
+  apiId: string
+  apiName: string
+  /** Derived: worst active incident's impact, else operational. */
+  health: ApiHealth
+  /** Mean uptime across the 90-day window, 0..1. */
+  uptime90d: number
+  /** One point per day — 90 entries, oldest first. */
+  days: UptimeDay[]
+  /** Incident history feed, newest first. */
+  incidents: StatusIncident[]
+}
+
+/** Severity of a site-wide banner message. */
+export type StatusBannerLevel = 'info' | 'degraded' | 'outage'
+
+/**
+ * A site-wide banner message (§2.6). Sourced independently of any single API's
+ * status — it can carry anything (a general announcement, or a notice that an
+ * API is degraded/down). `apiId` deep-links to that API's status page when set.
+ */
+export interface StatusBannerMessage {
+  id: string
+  level: StatusBannerLevel
+  message: string
+  apiId?: string
+}

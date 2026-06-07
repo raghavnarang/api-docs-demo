@@ -3,10 +3,12 @@ import type {
   ApiDetail,
   ApiKey,
   ApiSearchHit,
+  ApiStatus,
   ApiSummary,
   CreateApiKeyInput,
   CreatedApiKey,
   ErrorRefEntry,
+  StatusBannerMessage,
   UsageReport,
   UsageWindow,
 } from './types'
@@ -69,4 +71,21 @@ export interface UsageAnalyticsRepository {
     keyId: string,
     window: UsageWindow,
   ): Promise<UsageReport>
+}
+
+/**
+ * API Status contract (§2.6). Global infra health per API — NOT user-scoped, so
+ * (unlike keys/analytics) it takes no token; it mirrors `ApiCatalogRepository`.
+ * Mocked in the local-json adapter; a REST adapter would return the same shape
+ * from a status/metrics backend.
+ */
+export interface ApiStatusRepository {
+  /** Per-API health, 90-day uptime, and incident feed. Null for an unknown id. */
+  getApiStatus(apiId: string): Promise<ApiStatus | null>
+  /**
+   * Site-wide banner messages — a SEPARATE source from per-API status, so the
+   * banner can surface anything (announcements, or an API degradation/outage)
+   * without coupling to a single API's status fetch. Empty when nothing active.
+   */
+  getStatusBanner(): Promise<StatusBannerMessage[]>
 }

@@ -26,4 +26,11 @@ export const queryKeys = {
     usage: (owner: string, keyId: string, window: string) =>
       [...queryKeys.analytics.all, 'usage', owner, keyId, window] as const,
   },
+  status: {
+    all: ['status'] as const,
+    /** Per-API status. Global infra health — not user-scoped, no owner partition. */
+    api: (apiId: string) => [...queryKeys.status.all, 'api', apiId] as const,
+    /** Site-wide banner messages — a separate source from per-API status. */
+    banner: () => [...queryKeys.status.all, 'banner'] as const,
+  },
 } as const

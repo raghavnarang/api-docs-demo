@@ -3,12 +3,14 @@ import type { DataSource } from '../../data-source'
 import type {
   ApiCatalogRepository,
   ApiKeyRepository,
+  ApiStatusRepository,
   UsageAnalyticsRepository,
 } from '../../repositories'
 import * as analyticsStore from './analytics-store'
 import * as keysStore from './keys-store'
 import { resolveOwner } from './owner'
 import { specMatchesQuery } from './search'
+import * as statusStore from './status-store'
 
 /**
  * Reads the API catalogue from the static `API_REGISTRY` (+ each entry's bundled
@@ -78,5 +80,14 @@ export function createLocalJsonDataSource(
     },
   }
 
-  return { catalog, keys, analytics }
+  const status: ApiStatusRepository = {
+    async getApiStatus(apiId) {
+      return statusStore.getApiStatus(apiId, registry)
+    },
+    async getStatusBanner() {
+      return statusStore.getStatusBanner(registry)
+    },
+  }
+
+  return { catalog, keys, analytics, status }
 }
