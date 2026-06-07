@@ -4,6 +4,8 @@
  * status colours stay consistent everywhere they appear (docs now, sandbox later).
  */
 
+import type { ApiHealth } from '../../lib/data/types'
+
 type BadgeClasses = string
 
 const PALETTE = {
@@ -40,4 +42,18 @@ export function statusColor(status: string | number): BadgeClasses {
   if (code >= 400 && code < 500) return PALETTE.amber
   if (code >= 500) return PALETTE.red
   return PALETTE.slate
+}
+
+/** API health (§2.6): operational = green, degraded = amber, outage = red. */
+export function healthColor(health: ApiHealth): BadgeClasses {
+  switch (health) {
+    case 'operational':
+      return PALETTE.green
+    case 'degraded':
+      return PALETTE.amber
+    case 'outage':
+      return PALETTE.red
+    default:
+      return PALETTE.slate
+  }
 }

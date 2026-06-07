@@ -5,6 +5,7 @@ import { Sidebar } from './Sidebar'
 import { SearchDialog } from './SearchDialog'
 import { useSearchUiStore } from '../store'
 import { UserMenu } from '../../auth/components/UserMenu'
+import { IncidentBanner } from '../../status/components/IncidentBanner'
 
 /**
  * Persistent two-column portal layout: a slim header (with the search trigger) +
@@ -58,6 +59,7 @@ export function AppShell() {
           <Sidebar />
         </aside>
         <main className="min-w-0 flex-1">
+          <IncidentBanner />
           <Outlet />
         </main>
       </div>

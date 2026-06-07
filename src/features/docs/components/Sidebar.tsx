@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
-import { Link, useParams } from '@tanstack/react-router'
-import { BarChart3, KeyRound, TerminalSquare } from 'lucide-react'
+import { Link, useMatchRoute } from '@tanstack/react-router'
+import { Activity, BarChart3, KeyRound, TerminalSquare } from 'lucide-react'
 import {
   useApi,
   useApiDocs,
@@ -42,8 +42,11 @@ function SectionLink({
  */
 export function Sidebar() {
   const apis = useApis()
-  const params = useParams({ strict: false }) as { apiId?: string }
-  const activeApiId = params.apiId
+  // Only treat an API as "active" (expand its TOC section) on the docs route —
+  // not on /status/$apiId, which shares the same param name.
+  const matchRoute = useMatchRoute()
+  const docsMatch = matchRoute({ to: '/docs/$apiId' })
+  const activeApiId = docsMatch ? (docsMatch.apiId as string) : undefined
 
   const endpointsQuery = useApiEndpoints(activeApiId ?? '')
   const endpoints = useMemo(
@@ -179,6 +182,16 @@ export function Sidebar() {
             >
               <BarChart3 className="h-4 w-4" aria-hidden />
               Usage Analytics
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/status"
+              className="flex items-center gap-2 rounded px-2 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+              activeProps={{ className: 'bg-slate-100 text-slate-900' }}
+            >
+              <Activity className="h-4 w-4" aria-hidden />
+              API Status
             </Link>
           </li>
         </ul>

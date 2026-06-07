@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react'
-import { useLocation } from '@tanstack/react-router'
+import { Link, useLocation } from '@tanstack/react-router'
+import { Activity } from 'lucide-react'
 import { useApi, useApiEndpoints } from '../hooks/use-catalog'
 import { DOCS_BOTTOM_SENTINEL_ID, useScrollSpy } from '../hooks/use-scroll-spy'
 import { useDocsUiStore } from '../store'
@@ -45,13 +46,23 @@ export function ApiDocsPage({ apiId }: { apiId: string }) {
       <QueryBoundary query={api} empty={<EmptyState title="API not found" />}>
         {(detail) => (
           <header className="border-b border-slate-200 pb-6">
-            <div className="flex items-baseline gap-3">
-              <h1 className="text-2xl font-bold text-slate-900">
-                {detail.name}
-              </h1>
-              <span className="font-mono text-sm text-slate-400">
-                v{detail.version}
-              </span>
+            <div className="flex items-baseline justify-between gap-3">
+              <div className="flex items-baseline gap-3">
+                <h1 className="text-2xl font-bold text-slate-900">
+                  {detail.name}
+                </h1>
+                <span className="font-mono text-sm text-slate-400">
+                  v{detail.version}
+                </span>
+              </div>
+              <Link
+                to="/status/$apiId"
+                params={{ apiId }}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+              >
+                <Activity className="h-3.5 w-3.5" aria-hidden />
+                View status
+              </Link>
             </div>
             {detail.description ? (
               <p className="mt-2 text-slate-600">{detail.description}</p>
