@@ -1,6 +1,11 @@
 import { API_REGISTRY, type ApiDefinition } from '../../../../apis/api-registry'
 import type { DataSource } from '../../data-source'
-import type { ApiCatalogRepository } from '../../repositories'
+import type {
+  ApiCatalogRepository,
+  ApiKeyRepository,
+} from '../../repositories'
+import * as keysStore from './keys-store'
+import { resolveOwner } from './owner'
 import { specMatchesQuery } from './search'
 
 /**
@@ -47,5 +52,17 @@ export function createLocalJsonDataSource(
     },
   }
 
-  return { catalog }
+  const keys: ApiKeyRepository = {
+    async listKeys(token) {
+      return keysStore.listKeys(resolveOwner(token))
+    },
+    async createKey(token, input) {
+      return keysStore.createKey(resolveOwner(token), input)
+    },
+    async revokeKey(token, id) {
+      keysStore.revokeKey(resolveOwner(token), id)
+    },
+  }
+
+  return { catalog, keys }
 }
