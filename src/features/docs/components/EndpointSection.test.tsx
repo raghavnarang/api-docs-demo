@@ -1,6 +1,19 @@
 import { render, screen } from '@testing-library/react'
-import { test, expect, describe } from 'vitest'
+import { test, expect, describe, vi } from 'vitest'
 import type { EndpointDef } from '../../../lib/spec-parser'
+
+// Render the router Link as a plain anchor so the section can mount without a
+// RouterProvider context.
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({
+    children,
+    to,
+  }: {
+    children: React.ReactNode
+    to?: string
+  }) => <a href={to ?? '#'}>{children}</a>,
+}))
+
 import { EndpointSection } from './EndpointSection'
 
 const endpoint: EndpointDef = {
@@ -42,7 +55,9 @@ const endpoint: EndpointDef = {
 
 describe('EndpointSection (data-driven, no hardcoded spec)', () => {
   test('renders method, path, params, body and responses from the EndpointDef', () => {
-    const { container } = render(<EndpointSection endpoint={endpoint} />)
+    const { container } = render(
+      <EndpointSection endpoint={endpoint} apiId="payments" />,
+    )
 
     // anchor target id == endpoint id
     expect(container.querySelector('#createPayment')).not.toBeNull()

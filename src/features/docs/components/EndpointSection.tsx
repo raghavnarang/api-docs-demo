@@ -1,3 +1,5 @@
+import { Link } from '@tanstack/react-router'
+import { FlaskConical } from 'lucide-react'
 import type { EndpointDef } from '../../../lib/spec-parser'
 import { MethodBadge } from '../../../components/MethodBadge'
 import { StatusBadge } from '../../../components/StatusBadge'
@@ -8,9 +10,16 @@ import { CopyLinkButton } from '../../../components/CopyLinkButton'
 /**
  * Renders one endpoint entirely from its parsed `EndpointDef`: method badge,
  * path, description, params table, request-body schema, and response schemas.
- * The wrapping `<section id>` is the scroll/anchor target for the TOC.
+ * The wrapping `<section id>` is the scroll/anchor target for the TOC. `apiId`
+ * powers the "Try in sandbox" deep-link.
  */
-export function EndpointSection({ endpoint }: { endpoint: EndpointDef }) {
+export function EndpointSection({
+  endpoint,
+  apiId,
+}: {
+  endpoint: EndpointDef
+  apiId: string
+}) {
   const { method, path, summary, description, params, requestBody, responses } =
     endpoint
 
@@ -23,6 +32,14 @@ export function EndpointSection({ endpoint }: { endpoint: EndpointDef }) {
         <MethodBadge method={method} />
         <code className="font-mono text-sm text-slate-800">{path}</code>
         <CopyLinkButton anchorId={endpoint.id} />
+        <Link
+          to="/sandbox"
+          search={{ api: apiId, endpoint: endpoint.id }}
+          className="ml-auto inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-blue-600"
+        >
+          <FlaskConical className="h-3.5 w-3.5" aria-hidden />
+          Try in sandbox
+        </Link>
       </div>
       {summary ? (
         <h3 className="mt-2 text-lg font-semibold text-slate-900">{summary}</h3>
