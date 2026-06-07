@@ -1,140 +1,170 @@
 # Developer Portal
 
-Extensible API documentation & sandbox SPA for external developers. PokéAPI is
-used as demo data; the architecture is designed so a reviewer can add a second
-API with no component changes.
-
-> **Status:** auth + docs browsing live. Supabase-backed sign in / up / out,
-> protected sections, and OpenAPI-driven docs. Remaining portal features land next.
+Extensible API documentation & sandbox platform for external developers. Built with React 18, TypeScript, and Vite. PokéAPI is included as demo data; the architecture is designed so adding a second API requires touching exactly one file.
 
 ## Prerequisites
 
-- Node.js 20+ (developed on 24)
+- Node.js 20+
 - npm 10+
-- A Supabase project (free tier) for auth — see [Authentication](#authentication).
+- A free [Supabase](https://supabase.com) project (for authentication)
 
-## Getting started
+## Quick start
 
 ```bash
-cp .env.example .env   # fill in your Supabase URL + publishable key
+git clone <repo-url>
+cd api-docs-demo
+cp .env.example .env       # add your Supabase credentials (see below)
 npm install
-npm run dev            # http://localhost:5173
+npm run dev                # http://localhost:5173
 ```
+
+The app should be running in under 2 minutes from a clean clone.
+
+## Environment variables
+
+Copy `.env.example` to `.env` and fill in the two required values:
+
+```bash
+VITE_SUPABASE_URL=https://<your-project>.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=<your-anon-key>
+```
+
+Get both from **Supabase → Project Settings → API**. All other keys in `.env.example` are for optional alternate providers and can be left blank.
 
 ## Scripts
 
-| Script               | What it does                          |
-| -------------------- | ------------------------------------- |
-| `npm run dev`        | Start Vite dev server                 |
-| `npm run build`      | Type-check + production build         |
-| `npm run preview`    | Preview the production build          |
-| `npm run lint`       | ESLint                                |
-| `npm run type-check` | `tsc --noEmit` (strict)               |
-| `npm test`           | Vitest (run once)                     |
-| `npm run format`     | Prettier                              |
+| Script               | What it does                      |
+| -------------------- | --------------------------------- |
+| `npm run dev`        | Start Vite dev server             |
+| `npm run build`      | Type-check + production build     |
+| `npm run preview`    | Serve the production build        |
+| `npm run lint`       | ESLint                            |
+| `npm run type-check` | `tsc --noEmit` (strict)           |
+| `npm test`           | Vitest unit tests (single run)    |
+| `npm run format`     | Prettier                          |
 
-## Architecture
-
-```
-src/
-├── apis/api-registry.ts   # single source of truth for registered APIs
-├── features/              # auth, docs, sandbox, keys, analytics, changelog, status
-├── components/            # shared UI primitives
-├── lib/
-│   ├── data/              # DAL abstraction (TanStack Query backing)
-│   ├── auth/              # auth-provider abstraction
-│   ├── sandbox/           # always-REST sandbox executor
-│   ├── spec-parser.ts     # OpenAPI → domain model (stub)
-│   └── snippet-generator.ts # cURL / fetch / python (stub)
-├── routes/                # TanStack Router routes
-├── app/                   # config (adapter selection) + provider composition
-├── router.tsx
-└── main.tsx
-```
-
-### Data access layer (DAL)
-
-The app never talks to a data source directly. It consumes **repository
-interfaces** (`src/lib/data/repositories.ts`); a `DataSource` bundles them
-(`src/lib/data/data-source.ts`). Feature hooks wrap repository calls in
-TanStack Query (`useQuery` for reads, `useMutation` for writes).
-
-Swappable backends: `mock` (default), `rest`, `graphql`, `local-json`. Each is a
-factory in `src/lib/data/providers/`, registered in a **type-safe registry**
-(`Record<DataSourceKind, () => DataSource>`).
-
-### Auth
-
-Same pattern. `AuthProvider` (`src/lib/auth/types.ts`) abstracts the provider;
-`useAuth()` exposes session/sign-in/out. Swappable: `supabase` (**default**),
-`mock`, `firebase`, `auth0`, `custom-jwt`. See [Authentication](#authentication).
-
-### Sandbox
-
-`src/lib/sandbox/rest-client.ts` is **always REST**, independent of the DAL
-selection. Exposed (later) via a `useSandboxRequest()` hook built on
-`useMutation` for every HTTP verb (imperative one-shot, no caching).
-
-### Selecting adapters
-
-Adapter choice is a **typed config**, not env vars — edit
-`src/app/config.ts` (`appConfig.dataSource`, `appConfig.authProvider`). The
-registries are exhaustively type-checked, so an unknown kind is a compile error.
-Env vars (`.env`, see `.env.example`) hold only **provider secrets**, read
-inside each adapter factory.
-
-## Authentication
-
-The portal uses **Supabase Auth** (`appConfig.authProvider = 'supabase'`).
-
-**Why Supabase:** generous free tier, email/password out of the box, and a
-client SDK that handles the hard parts for us — `persistSession` keeps the
-session in `localStorage` (survives reload) and `autoRefreshToken` performs
-**silent JWT refresh** in the background. Both fall out of the SDK defaults; the
-adapter just forwards the refreshed session to the app via `onAuthStateChange`.
-It also slots cleanly behind our provider-agnostic `AuthProvider` contract, so
-swapping to Auth0/Firebase later is a one-file adapter, not a rewrite.
-
-### Setup
-
-1. Create a project at [supabase.com](https://supabase.com).
-2. In **Project Settings → API**, copy the **Project URL** and the
-   **publishable** (anon) key.
-3. Put them in `.env` (never committed — see `.env.example`):
-
-   ```bash
-   VITE_SUPABASE_URL=https://<your-project>.supabase.co
-   VITE_SUPABASE_PUBLISHABLE_KEY=<your-publishable-key>
-   ```
-
-   Read only inside the Supabase adapter factory
-   (`src/lib/auth/providers/supabase/index.ts`) — the app never reads
-   `import.meta.env` directly.
-
-### Creating a test user
+## Creating a test user
 
 Two options:
 
-- **Dashboard:** Supabase → **Authentication → Users → Add user**. Enable
-  *Auto Confirm* so the account is usable immediately.
-- **In-app sign-up:** use the **Sign up** toggle on `/login`. By default Supabase
-  requires email confirmation, so the app shows a "check your email" notice and
-  no session is created until you confirm. For frictionless review, disable
-  **Authentication → Sign In / Providers → Confirm email** — sign-up then logs
-  the user in instantly and redirects into the portal.
+**Option A — Supabase dashboard (fastest for reviewers)**
 
-### What's protected
+1. Open your project → **Authentication → Users → Add user**.
+2. Enable **Auto Confirm** so the account works immediately without email verification.
 
-- Docs (`/docs`) are **public**.
-- `/keys` and `/sandbox` sit behind a route guard (`src/routes/authenticated.tsx`):
-  unauthenticated visits redirect to `/login?redirect=<path>`, and after sign-in
-  you land back on the requested page. The guard reads auth from the router
-  context, which re-injects on every session change so it re-runs automatically.
+**Option B — In-app sign-up**
 
-## Adding a new API (planned workflow)
+1. Navigate to `/login` and click **Sign up**.
+2. By default Supabase sends a confirmation email. To skip this: go to **Authentication → Providers → Email** and disable *Confirm email*. Sign-up then logs the user in instantly.
 
-1. Drop an OpenAPI 3.x spec at `src/apis/<api-name>/openapi.json`.
-2. Add one entry to `API_REGISTRY` in `src/apis/api-registry.ts`.
-3. Optionally add `docs.md`, `changelog.json`, and SDK links.
+## Portal sections
 
-No component code changes — the portal renders dynamically from the registry.
+| Section              | Route         | Notes                                          |
+| -------------------- | ------------- | ---------------------------------------------- |
+| API Catalogue & Docs | `/docs`       | Public — no login required                     |
+| Interactive Sandbox  | `/sandbox`    | Protected — requires sign-in                   |
+| API Key Management   | `/keys`       | Protected — requires sign-in                   |
+| Usage Analytics      | `/analytics`  | Protected — mocked data, UI is fully rendered  |
+| API Status           | `/status`     | Public — mocked incident history               |
+| Changelog            | `/changelog`  | Public — driven from `changelog.json` per API  |
+
+## Authentication
+
+The portal uses **Supabase Auth** (`appConfig.authProvider = 'supabase'` in `src/app/config.ts`).
+
+**Why Supabase:**
+
+- `persistSession: true` keeps the JWT in `localStorage` — session survives page reload.
+- `autoRefreshToken: true` performs silent token refresh in the background; no manual timer needed.
+- Email/password works out of the box on the free tier with no extra setup.
+- The adapter sits behind an `AuthProvider` interface (`src/lib/auth/types.ts`), so swapping to Auth0, Firebase, or a custom JWT is a single-file change — no component rewrites.
+
+Protected routes (`/sandbox`, `/keys`, `/analytics`) redirect unauthenticated users to `/login?redirect=<path>`. After sign-in the user is returned to the originally requested page. The guard is wired into TanStack Router's `beforeLoad` so it re-runs on every navigation.
+
+## Adding a new API
+
+Adding a second API to the portal requires **three steps and zero component changes**:
+
+**Step 1 — Drop the spec**
+
+```bash
+src/apis/<api-name>/openapi.json    # required: valid OpenAPI 3.x document
+src/apis/<api-name>/docs.md         # optional: getting-started guide (Markdown)
+src/apis/<api-name>/changelog.json  # optional: versioned changelog entries
+src/apis/<api-name>/errors.json     # optional: error reference catalogue
+```
+
+**Step 2 — Register the API**
+
+Open `src/apis/api-registry.ts` and add one entry:
+
+```ts
+import myApiSpec from './my-api/openapi.json'
+import myApiDocs from './my-api/docs.md?raw'      // optional
+import myApiChangelog from './my-api/changelog.json' // optional
+import myApiErrors from './my-api/errors.json'       // optional
+
+// Inside API_REGISTRY:
+{
+  id: 'my-api',
+  name: 'My API',
+  version: '1.0.0',
+  baseUrl: 'https://api.example.com/v1',
+  description: 'Short description shown in the sidebar.',
+  spec: asSpec(myApiSpec),
+  docs: myApiDocs,               // optional
+  changelog: asChangelog(myApiChangelog), // optional
+  errorReference: asErrors(myApiErrors), // optional
+  sdks: [
+    { lang: 'JavaScript', install: 'npm install my-sdk', repo: 'https://github.com/...' },
+  ],
+}
+```
+
+**Step 3 — Done**
+
+The API appears in the sidebar. Docs, sandbox, changelog, status, SDK links, and error reference all render from the registry automatically.
+
+The `stub-payments` entry in the registry is a minimal working example of this pattern.
+
+## Project structure
+
+```
+src/
+├── apis/
+│   ├── api-registry.ts       # single source of truth — add APIs here
+│   ├── pokeapi/              # PokéAPI: openapi.json, docs.md, changelog.json, errors.json
+│   ├── tcgdex/               # TCGdex: second demo API (also fully wired)
+│   └── stub-payments/        # stub for extensibility demo
+├── features/
+│   ├── auth/                 # sign-in / sign-up / sign-out UI + hooks
+│   ├── docs/                 # spec renderer (parameters, request body, response schemas)
+│   ├── sandbox/              # live request builder + code snippet generator
+│   ├── keys/                 # API key create / list / revoke
+│   ├── analytics/            # usage dashboard (mocked time-series + breakdown table)
+│   ├── changelog/            # versioned changelog browser with type filter
+│   └── status/               # health indicators + incident feed
+├── components/               # shared UI primitives (Badge, Button, Select, CodeBlock…)
+├── lib/
+│   ├── spec-parser.ts        # OpenAPI → typed domain model
+│   ├── snippet-generator.ts  # cURL / fetch / Python snippet generation
+│   ├── auth/                 # AuthProvider abstraction + Supabase adapter
+│   ├── data/                 # repository interfaces + local-json / mock providers
+│   └── sandbox/              # REST executor (useSandboxRequest)
+├── routes/                   # TanStack Router file-based routes
+└── app/
+    └── config.ts             # adapter selection (authProvider, dataSource)
+```
+
+## Tech stack decisions
+
+| Concern          | Choice                      | Reason                                                                 |
+| ---------------- | --------------------------- | ---------------------------------------------------------------------- |
+| Bundler          | Vite                        | Fast HMR, first-class TypeScript, JSON/raw imports out of the box      |
+| Routing          | TanStack Router v1          | Type-safe params and search; `beforeLoad` guards without extra wiring  |
+| Server state     | TanStack Query              | Avoids raw `useEffect` for data fetching; mutation + cache invalidation|
+| Auth             | Supabase Auth               | Silent refresh + `localStorage` persistence with no manual plumbing    |
+| Styling          | Tailwind CSS                | Utility-first; consistent spacing without custom CSS                   |
+| Schema           | Zod                         | Runtime OpenAPI type validation at the registry boundary               |
+| Testing          | Vitest + React Testing Library | Vite-native; co-located tests                                       |
+| Charts           | Recharts                    | Composable, TS-friendly, low bundle overhead                           |
