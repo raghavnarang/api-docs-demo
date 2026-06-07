@@ -253,3 +253,45 @@ get_rarities_rarity_"
 - **Goal:** Log the session's prompts and commit + push the scroll-spy work
 - **Prompt:** "log prompts and do atomic commits and push"
 - **Outcome:** Logged entries 026–028, committed the scroll-spy refactor (use-scroll-spy.ts + ApiDocsPage.tsx + this log) as one atomic commit, pushed to `main`. Left the unrelated in-progress sandbox/CodeBlock/snippet-generator changes untouched.
+
+### Entry 030
+- **Tool:** Claude Opus 4.8
+- **Goal:** Plan + implement §2.3 Interactive Sandbox
+- **Prompt:** "Currently Auth + API Catalog & Docs are completed. Lets plan Interactive Sandbox. For more info read attached pdf. Also you can get context from prompts.md & /plans"
+- **Polls (AskUserQuestion):**
+  - Entry point? → **Selectors + docs deep-link** (`/sandbox?api=&endpoint=`, plus a "Try in sandbox" link per docs endpoint)
+  - Body editor? → **CodeMirror 6** (`@uiw/react-codemirror` + `@codemirror/lang-json`)
+  - Auth injection? → **Inject with toggle** (`Authorization: Bearer <session.token>`, disableable for public APIs)
+  - Scope? → **Full §2.3 only** (defer bonus request-history/replay/HAR)
+- **Outcome:** Built the full §2.3 sandbox, fully spec-driven, reusing the existing badges/conventions/query/auth layers. **Pure lib (unit-tested):** `build-request.ts` (assemble a `SandboxRequest` — path substitution+encode, query string, header merge, Bearer inject that never overrides a user-set Authorization, JSON body for non-GET; `tryParseJson` helper), `form-init.ts` (seed param rows + JSON body skeleton from `EndpointDef` — skips readOnly, prefers example/default, first union variant), and implemented `snippet-generator.ts` (cURL/JS/Python from the same assembled request; Python emits a native dict literal). **Shared:** copyable `CodeBlock`. **Feature:** `useExecuteRequest` (`useMutation`) + `useSandboxForm` controller hook; `SandboxPanel` + `EndpointSelector`/`RequestBuilder`/`ParamRows`/`BodyEditor`/`AuthInjectToggle`/`ResponseViewer`/`SnippetTabs`. **Routing:** `/sandbox` typed `validateSearch` `{api?,endpoint?}`, preloaded + written back so the URL stays shareable. **Docs:** "Try in sandbox" `Link` in `EndpointSection` (passed `apiId` from `ApiDocsPage`). **Perf:** `BodyEditor` is `React.lazy`+`Suspense` so CodeMirror stays out of the main bundle (split: main ~230 KB gzip, BodyEditor chunk ~138 KB gzip on demand). Verified: type-check 0, lint 0 errors, 95 tests pass, build green; PokéAPI live GET 200; dev server boots 200. Plan snapshot → [plans/plan-v7.md](plans/plan-v7.md).
+
+### Entry 031
+- **Tool:** Claude Opus 4.8
+- **Goal:** Confirm the duplicate `useApis` calls dedupe
+- **Prompt:** "I am hoping that useAPIs in selected line and in endpoint selector will dedup two requests, as react query will handle it and provide same result to both, right?"
+- **Outcome:** Confirmed — both calls share the `queryKeys.apis.list()` key, so React Query serves one in-flight request + one cache entry to both subscribers (single fetch, referentially-stable data). Same for `useApiEndpoints(apiId)`, which also reuses the docs page's parse-once cache. Dedup holds while ≥1 subscriber is mounted; `gcTime` (Infinity for local-json) governs eviction afterwards. No code change.
+
+### Entry 032
+- **Tool:** Claude Opus 4.8
+- **Goal:** Clarify `staleTime` vs `gcTime`
+- **Prompt:** "what is difference in staleTime and gcTime?"
+- **Outcome:** Explained — `staleTime` = how long data stays fresh (no refetch) while mounted, counted from last fetch; `gcTime` = how long an unused entry survives after its last subscriber unmounts, before deletion. They operate in different phases (active vs inactive). Noted this repo sets both to `specCacheTtlMs` = `Infinity` for static local-json (parse-once, never evicted), finite for a REST source. No code change.
+
+### Entry 033
+- **Tool:** Claude Opus 4.8
+- **Goal:** Verify the cURL header single-quote escaping
+- **Prompt:** "hello: 'world' key value of header are rendered in curl as \n-H 'hello: '\\''world'\\''' \\\nis it expected?"
+- **Outcome:** Confirmed correct — the value literally contained single quotes, and `shellQuote` uses the canonical POSIX `'\''` trick (close → escaped literal quote → reopen) so the shell reconstructs the exact value `hello: 'world'`. Copy-ready. Noted the value field is raw (no manual quoting needed). No code change.
+
+### Entry 034
+- **Tool:** Claude Opus 4.8
+- **Goal:** Fix Python snippet indentation (reported via preview image)
+- **Prompt:** "do you think if it is parsing and format the display text correctly. Not sure if pre tag can understand python. attached image of preview"
+- **Outcome:** Clarified `<pre>` does no language parsing (whitespace-only render) — the bug was in the generator. `toPython` computed absolute indent from `depth` starting at 1, but the dict is placed after `  headers=`/`  json=` (already depth 1), so the body + closing brace were under-indented by one level. Fixed by starting top-level body dicts at depth 2 (`toPython(x, 2)`); added an exact-string test on a nested body to lock indentation. 6/6 snippet tests pass.
+
+### Entry 035
+- **Tool:** Claude Opus 4.8
+- **Goal:** Log prompts + atomic commits + push for the sandbox work
+- **Prompt:** "LGTM lets log prompts, do atomic commits and push"
+- **Outcome:** Logged entries 030–035 + plan-v7, committed the sandbox feature as atomic Conventional Commits, pushed to `main`. Left the unrelated pre-existing `UserMenu.tsx` tweak untouched.
+
