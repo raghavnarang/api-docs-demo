@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Link, useParams } from '@tanstack/react-router'
-import { KeyRound, TerminalSquare } from 'lucide-react'
+import { BarChart3, KeyRound, TerminalSquare } from 'lucide-react'
 import {
   useApi,
   useApiDocs,
@@ -169,6 +169,16 @@ export function Sidebar() {
             >
               <TerminalSquare className="h-4 w-4" aria-hidden />
               Sandbox
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/analytics"
+              className="flex items-center gap-2 rounded px-2 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+              activeProps={{ className: 'bg-slate-100 text-slate-900' }}
+            >
+              <BarChart3 className="h-4 w-4" aria-hidden />
+              Usage Analytics
             </Link>
           </li>
         </ul>
