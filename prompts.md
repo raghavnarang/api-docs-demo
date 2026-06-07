@@ -392,3 +392,34 @@ get_rarities_rarity_"
 - **Prompts:** "how many incidents the local-json's status store will build?" / "and are they mapped to recent days" / "commit and push" / "yes" (log prompts)
 - **Outcome:** Clarified the mock generates 1–3 incidents per API (seeded per `apiId`; 7 total for the bundled three: pokeapi 3, tcgdex 1, stub-payments 3), all mapped to the recent 14-day feed window (active 0–2 days ago, resolved 1–13) while the 90-day uptime bar dips only on those recent incident days. Committed the feature as 3 atomic Conventional Commits (DAL contract + provider → pages/banner/route/nav → tests) and pushed to `main`; left the unrelated pre-existing `UserMenu.tsx` change untouched. Logged entries 040–049.
 
+### Entry 050
+- **Tool:** Claude Opus 4.8
+- **Goal:** Plan the Changelog feature (§2.7) with registry-driven mock data
+- **Prompt:** "Lets plan and create another feature, Changelog. Check section 2.7 for requirements
+
+Generate mocked changelogs files in API Registery for local-json provider
+
+More info in prompts.md and plan folder. attaching pdf for full project context"
+- **Polls (AskUserQuestion):**
+  - Where should the changelog surface? → **Standalone page only**
+  - Entry type set + colour coding? → **Breaking/Feature/Fix (assignment)** (Breaking=red, Feature=green, Fix=blue)
+- **Outcome:** Explored the status/analytics DAL + feature patterns (status is the closest template — global, registry-backed). Wrote the initial plan ([plans/plan-v10.md](plans/plan-v10.md)): registry-driven `changelog.json` per API (§4 drop-in, `ApiDefinition.changelog?`), a dedicated `ChangelogRepository` + `changelog-store.ts` stamping `apiId`/`apiName`, and a standalone aggregate `/changelog` page with API + type filters. Superseded by plan-v11 in the next prompt before any code was written.
+
+### Entry 051
+- **Tool:** Claude Opus 4.8
+- **Goal:** Re-shape to per-API fetch (Sandbox pattern) + add a status CTA
+- **Prompt:** "Lets fetch one changelog per api selected in filter, just like we are doing in Sandbox panel. We can show a CTA like view status on respective API docs as well."
+- **Outcome:** Studied the Sandbox's selection model (`?api` search param + per-selection fetch) and revised the plan ([plans/plan-v11.md](plans/plan-v11.md)): the page fetches ONE API's changelog at a time via an API picker persisted in `/changelog?api={apiId}`; a type filter narrows the loaded list client-side. Because the fetch is per-API registry data (identical to `getDocs`/`getErrorReference`), changelog folds onto the existing `ApiCatalogRepository` — **no dedicated repo, no store file, no `DataSource` change**, and entries carry no `apiId`/`apiName`. Implemented it: `ChangelogType`/`ChangelogEntry` types, `getChangelog(id)` on the catalog contract + local-json adapter (`find(id)?.changelog ?? []`), `apis.changelog(id)` query key, `changelogTypeColor`, three `changelog.json` seeds (pokeapi/tcgdex/stub-payments), `useApiChangelog`, and the page/picker/type-filter/entry-card + route + sidebar link. Initially placed docs/status CTAs on the changelog page (moved next prompt). type-check 0, lint 0, 158 tests pass (6 new).
+
+### Entry 052
+- **Tool:** Claude Opus 4.8
+- **Goal:** Move the CTA off the changelog page onto the docs page
+- **Prompt:** "CTAs are not needed on Changelog page. I need one extra cta on Endpoint Catalog/Doc page, with existing View Status CTA"
+- **Outcome:** Removed the docs/status CTAs (and the now-dead `CtaLink` helper + imports) from `ChangelogPage`. Added a "View changelog" link (`→ /changelog?api={apiId}`, `ScrollText` icon) beside the existing "View status" link in `ApiDocsPage`, wrapping both in a flex group with matching border-pill styling. type-check 0, lint 0, changelog tests pass.
+
+### Entry 053
+- **Tool:** Claude Opus 4.8
+- **Goal:** Log prompts, commit, and push the Changelog feature
+- **Prompt:** "log prompts, commit and push"
+- **Outcome:** Saved plan revisions v10/v11, logged entries 050–053, committed the feature as atomic Conventional Commits and pushed to `main`. Left the unrelated pre-existing `UserMenu.tsx` change untouched.
+
