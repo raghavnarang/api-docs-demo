@@ -295,3 +295,26 @@ get_rarities_rarity_"
 - **Prompt:** "LGTM lets log prompts, do atomic commits and push"
 - **Outcome:** Logged entries 030–035 + plan-v7, committed the sandbox feature as atomic Conventional Commits, pushed to `main`. Left the unrelated pre-existing `UserMenu.tsx` tweak untouched.
 
+### Entry 036
+- **Tool:** Claude Opus 4.8
+- **Goal:** Plan + build §2.4 API Key Management on the swappable DAL (local-json + localStorage), TanStack Query unaware of the source
+- **Prompt:** "Hey Lets plan and create another feature, API Key Management. Check section 2.4 for requirements\n\nlets use local-json as DAL, and use local storage for storing the data. and keep using same tanstack query unaware of data source. so that tomorrow rest api or any other remote backend can power this feature just by swap.\n\nMore info in prompts.md and plan folder. attaching pdf for full project context"
+- **Polls (AskUserQuestion):**
+  - Revoke semantics? → **Keep, mark `revoked`** (greyed row + status badge, reflected immediately)
+  - Scope keys to user, or global? → **Token-based** — resources are never fetched by a client-supplied userId; the token flows to the DAL and the owner is resolved behind it (`session.user.id` is only a local cache-partition key)
+  - Confirm dialog approach? → **New shared `Modal` + `ConfirmDialog` primitives** in `components/`
+  - Persist the full secret? → **Show once, never again** (storage keeps only `maskedKey` + metadata)
+- **Outcome:** Planned (→ [plans/plan-v8.md](plans/plan-v8.md)) and built the full §2.4 feature, fully data-source-agnostic. **DAL:** added `ApiKey`/`CreateApiKeyInput`/`CreatedApiKey` types, the `ApiKeyRepository` contract (token-based identity), `DataSource.keys`, and a `queryKeys.keys` namespace. **local-json:** `owner.ts` (`resolveOwner` decodes the JWT `sub`, falls back to the raw token for the opaque mock token — keeps the DAL free of any auth import) + `keys-store.ts` (per-owner `localStorage` bucket; `crypto`-based secret `sk_sandbox_`/`sk_live_`; persists only the masked last-4, never the plaintext) wired into the provider; `mock` inherits automatically. **Feature:** `use-api-keys.ts` (`useApiKeys`/`useCreateApiKey`/`useRevokeApiKey` — token as fetch identity, `user.id` only as cache partition) + Zod `validation.ts` (name 1–40, environment enum, future-expiry rule). **Shared primitives:** `Modal` (overlay/Esc/click-outside/focus, generalised from SearchDialog) + `ConfirmDialog`. **UI:** rewrote `KeysPanel` (loading/empty/error/populated) orchestrating `KeyList`, `CreateKeyDialog`, `KeyRevealDialog` (one-time secret + copy + warning), `RevokeKeyDialog`, `EnvironmentBadge`. No routing/nav change — `/keys` route + auth guard + sidebar link already existed. Verified: type-check 0, lint 0 errors, 119 tests pass (28 new), build green.
+
+### Entry 037
+- **Tool:** Claude Opus 4.8
+- **Goal:** On logout, clear the React Query cache but persist localStorage (it's the mock backend)
+- **Prompt:** "on logout, the cache in react query must be deleted. but the localstorage can be persisted, as we are mocking to be an actual backend"
+- **Outcome:** Added `queryClient.clear()` to the `signOut` wrapper in `auth-context.tsx` (the provider sits inside `QueryClientProvider`, so `useQueryClient()` is available) — prevents a second account on the same browser from reading the first user's cached key list. `localStorage` is deliberately left intact: it's the mock backend, scoped per resolved owner, and must persist across sessions like a real API. Folded into plan-v8 (§3b) before implementation.
+
+### Entry 038
+- **Tool:** Claude Opus 4.8
+- **Goal:** Fix Name input losing focus after one character in the create-key dialog
+- **Prompt:** "major UI bug, on typing a character in Name input, it lost focus and doesn't capture more characters."
+- **Outcome:** Root cause was in the shared `Modal` primitive, not the input. Its focus effect listed `onClose` in its deps; `CreateKeyDialog` recreates `onClose` (`const close = …`) on every render, so each keystroke re-ran the effect and called `panel.focus()`, stealing focus from the input. Fixed by keying the focus effect on `open` only and guarding it to skip when a field inside the panel already holds focus (preserves the Name field's `autoFocus`, still focuses the panel for confirm-only dialogs); kept the Esc-key listener in its own effect. Added `Modal.test.tsx` regression test that re-renders with a fresh `onClose` per render and asserts the input keeps focus + value (fails on the old deps). type-check 0, lint 0 errors, 121 tests pass, build green.
+
