@@ -88,3 +88,49 @@ export interface CreateApiKeyInput {
 export interface CreatedApiKey extends ApiKey {
   secret: string
 }
+
+/** Reporting window for usage analytics (§2.5). */
+export type UsageWindow = '7d' | '30d'
+
+/** Aggregate metrics for a key over a window. */
+export interface UsageSummary {
+  totalCalls: number
+  errors4xx: number
+  errors5xx: number
+  /** (errors4xx + errors5xx) / totalCalls, in the range 0..1. */
+  errorRate: number
+  avgLatencyMs: number
+}
+
+/** One day of the time-series. */
+export interface UsageTimePoint {
+  /** ISO date, `YYYY-MM-DD`. */
+  date: string
+  calls: number
+  errors: number
+  avgLatencyMs: number
+}
+
+/** Per-endpoint breakdown row. */
+export interface EndpointUsage {
+  /** HTTP method, e.g. "GET". */
+  method: string
+  path: string
+  calls: number
+  /** 0..1. */
+  errorRate: number
+  avgLatencyMs: number
+}
+
+/**
+ * Usage analytics for a single key over a window (§2.5). Mocked behind the DAL
+ * today; a REST adapter would return the same shape from a metrics backend.
+ */
+export interface UsageReport {
+  keyId: string
+  window: UsageWindow
+  summary: UsageSummary
+  /** One point per day — 7 or 30 entries depending on the window. */
+  series: UsageTimePoint[]
+  endpoints: EndpointUsage[]
+}

@@ -20,4 +20,10 @@ export const queryKeys = {
     /** `owner` partitions the cache per account (never sent to the DAL). */
     list: (owner: string) => [...queryKeys.keys.all, 'list', owner] as const,
   },
+  analytics: {
+    all: ['analytics'] as const,
+    /** `owner` partitions the cache per account (never sent to the DAL). */
+    usage: (owner: string, keyId: string, window: string) =>
+      [...queryKeys.analytics.all, 'usage', owner, keyId, window] as const,
+  },
 } as const

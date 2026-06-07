@@ -7,6 +7,8 @@ import type {
   CreateApiKeyInput,
   CreatedApiKey,
   ErrorRefEntry,
+  UsageReport,
+  UsageWindow,
 } from './types'
 
 /**
@@ -52,4 +54,19 @@ export interface ApiKeyRepository {
   createKey(token: string, input: CreateApiKeyInput): Promise<CreatedApiKey>
   /** Revoke a key (kept in the list with `status: 'revoked'`). */
   revokeKey(token: string, id: string): Promise<void>
+}
+
+/**
+ * Usage Analytics contract (§2.5). Identity flows as the caller's auth `token`
+ * (same boundary as `ApiKeyRepository`) — the adapter resolves the owner behind
+ * it and scopes the report. Metrics are mocked in the local-json adapter; a REST
+ * adapter would forward the token and return the same shape from a metrics API.
+ */
+export interface UsageAnalyticsRepository {
+  /** Per-key metrics over a 7- or 30-day window. */
+  getKeyUsage(
+    token: string,
+    keyId: string,
+    window: UsageWindow,
+  ): Promise<UsageReport>
 }

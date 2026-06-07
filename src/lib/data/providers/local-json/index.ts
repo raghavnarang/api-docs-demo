@@ -3,7 +3,9 @@ import type { DataSource } from '../../data-source'
 import type {
   ApiCatalogRepository,
   ApiKeyRepository,
+  UsageAnalyticsRepository,
 } from '../../repositories'
+import * as analyticsStore from './analytics-store'
 import * as keysStore from './keys-store'
 import { resolveOwner } from './owner'
 import { specMatchesQuery } from './search'
@@ -64,5 +66,17 @@ export function createLocalJsonDataSource(
     },
   }
 
-  return { catalog, keys }
+  const analyticsEndpoints = analyticsStore.extractEndpoints(registry)
+  const analytics: UsageAnalyticsRepository = {
+    async getKeyUsage(token, keyId, window) {
+      return analyticsStore.getKeyUsage(
+        resolveOwner(token),
+        keyId,
+        window,
+        analyticsEndpoints,
+      )
+    },
+  }
+
+  return { catalog, keys, analytics }
 }
