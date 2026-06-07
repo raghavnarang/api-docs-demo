@@ -229,3 +229,27 @@ get_rarities_rarity_"
   - **Docs/env:** README Supabase choice + setup + test-user steps; fixed `.env.example` (`ANON_KEY` → `PUBLISHABLE_KEY`); dummy Supabase creds in the Vitest env so the now-default factory builds offline.
   - **Tests:** adapter mapping/forwarding/unsubscribe, validation, guard redirect, AuthPage states (incl. reactive-redirect + confirmation notice).
   - **Verified:** type-check 0, lint 0 errors, 74 tests pass, production build green.
+
+### Entry 026
+- **Tool:** Claude Opus 4.8
+- **Goal:** Collapse the docs scroll-spy's internal state into the store (one source of truth)
+- **Prompt:** "Can we optimise this in a way, that we provide callback that will be called when a new active id is generated, and we can also remove the usage of state in useScrollSpy, and instead of setting activeID state, call the callback with active ID. in this case, there will be no two states, only one (store)."
+- **Outcome:** Reworked `useScrollSpy` from stateful (`useState` + returns `activeId`) to callback-driven: takes `onActiveChange`, returns `void`, emits the active id (deduped via an effect-local `lastEmitted`, replacing React's setState dedup). `ApiDocsPage` now passes the zustand `setActiveEndpointId` action straight in and drops the `[activeId]` bridging effect — store is the only state. Kept the unmount cleanup effect (reset to null). First pass wrapped the callback in a latest-value ref (see Entry 027).
+
+### Entry 027
+- **Tool:** Claude Opus 4.8
+- **Goal:** Justify or remove the latest-callback ref
+- **Prompt:** "but I dont think callback will ever change, which case do you think it will change?"
+- **Outcome:** Agreed — the only caller passes a stable zustand action, so the ref guarded an impossible case here. Dropped the ref; the effect references `onActiveChange` directly (already excluded from deps via the existing `exhaustive-deps` disable). Added a comment documenting the stable-callback assumption and the ref escape hatch for future callers. tsc 0, 14 docs tests pass.
+
+### Entry 028
+- **Tool:** Claude Opus 4.8
+- **Goal:** Tighten the useScrollSpy doc comment
+- **Prompt:** "Can we simplify this comment & make it crisp and understandable?"
+- **Outcome:** Compressed the JSDoc 21→12 lines — kept the why (top-band + `rootMargin` offset trick, bottom-sentinel for short final sections, mount-order requirement, deduped callback / single source of truth), cut the repetition.
+
+### Entry 029
+- **Tool:** Claude Opus 4.8
+- **Goal:** Log the session's prompts and commit + push the scroll-spy work
+- **Prompt:** "log prompts and do atomic commits and push"
+- **Outcome:** Logged entries 026–028, committed the scroll-spy refactor (use-scroll-spy.ts + ApiDocsPage.tsx + this log) as one atomic commit, pushed to `main`. Left the unrelated in-progress sandbox/CodeBlock/snippet-generator changes untouched.

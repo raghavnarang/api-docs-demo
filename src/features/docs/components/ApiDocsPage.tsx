@@ -26,13 +26,11 @@ export function ApiDocsPage({ apiId }: { apiId: string }) {
     [endpointsQuery.data],
   )
 
-  const activeId = useScrollSpy(
-    useMemo(() => endpoints.map((e) => e.id), [endpoints]),
-  )
   const setActiveEndpointId = useDocsUiStore((s) => s.setActiveEndpointId)
-  useEffect(() => {
-    setActiveEndpointId(activeId)
-  }, [activeId, setActiveEndpointId])
+  useScrollSpy(
+    useMemo(() => endpoints.map((e) => e.id), [endpoints]),
+    setActiveEndpointId,
+  )
   useEffect(() => () => setActiveEndpointId(null), [setActiveEndpointId])
 
   const { hash } = useLocation()
@@ -79,7 +77,11 @@ export function ApiDocsPage({ apiId }: { apiId: string }) {
           {(list) => (
             <div>
               {list.map((endpoint) => (
-                <EndpointSection key={endpoint.id} endpoint={endpoint} />
+                <EndpointSection
+                  key={endpoint.id}
+                  endpoint={endpoint}
+                  apiId={apiId}
+                />
               ))}
             </div>
           )}

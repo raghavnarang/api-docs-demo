@@ -1,35 +1,42 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 /** Shared id of the 1px marker ApiDocsPage renders after the last endpoint. */
 export const DOCS_BOTTOM_SENTINEL_ID = 'docs-bottom-sentinel'
 
 /**
- * Tracks which section (by element id) is active in the docs TOC, via
- * IntersectionObserver.
+ * Tracks the active docs-TOC section via IntersectionObserver and reports it
+ * through `onActiveChange` (deduped) — no internal state, so the caller owns the
+ * single source of truth.
  *
- * The trigger band is anchored at the top: `rootMargin` trims the top by `offset`
- * (≈ the sticky header) so sections scrolled above the click line stop counting —
- * the active section is then the topmost one still intersecting, which is exactly
- * the section a TOC click brings to the top.
+ * Active = topmost section crossing a top band; `rootMargin` trims the top by
+ * `offset` (the sticky header) so the match is the section a TOC click lands at
+ * the top. A second observer on a bottom sentinel forces the last id at page
+ * bottom, where short final sections never reach the top line.
  *
- * IO alone can't mark the final endpoint active at the bottom of the page (short
- * last sections never reach the top line), so a second observer watches a bottom
- * sentinel and forces the last id while it's visible.
- *
- * Call this from the component that renders the sections (so they're in the DOM
- * when the effect attaches). `ids` must be in document order; the sentinel is
- * located by id.
+ * Call from the component that renders the sections (so they're mounted when the
+ * effect attaches). `ids` must be in document order.
  */
 export function useScrollSpy(
   ids: string[],
+  onActiveChange: (id: string | null) => void,
   offset = 96,
   sentinelId: string = DOCS_BOTTOM_SENTINEL_ID,
-): string | null {
-  const [activeId, setActiveId] = useState<string | null>(null)
+): void {
   const key = ids.join('|')
+  // `onActiveChange` is intentionally excluded from the effect deps: callers pass
+  // a stable callback (e.g. a store action), so re-subscribing the observers on
+  // its identity would be wasteful. If a caller ever needs a changing callback,
+  // wrap it in a latest-value ref here.
   useEffect(() => {
+    let lastEmitted: string | null = null
+    const emit = (id: string | null) => {
+      if (id === lastEmitted) return
+      lastEmitted = id
+      onActiveChange(id)
+    }
+
     if (ids.length === 0) {
-      setActiveId(null)
+      emit(null)
       return
     }
 
@@ -38,13 +45,13 @@ export function useScrollSpy(
 
     const recompute = () => {
       if (atBottom) {
-        setActiveId(ids[ids.length - 1])
+        emit(ids[ids.length - 1])
         return
       }
       // Topmost section still intersecting the top band. If none (a gap between
       // sections), keep the previous active rather than flickering to null.
       const topmost = ids.find((id) => intersecting.has(id))
-      if (topmost) setActiveId(topmost)
+      if (topmost) emit(topmost)
     }
 
     const sectionObserver = new IntersectionObserver(
@@ -81,6 +88,4 @@ export function useScrollSpy(
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, offset, sentinelId])
-
-  return activeId
 }
