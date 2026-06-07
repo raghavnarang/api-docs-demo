@@ -47,6 +47,9 @@ export function createLocalJsonDataSource(
     async getErrorReference(id) {
       return find(id)?.errorReference ?? []
     },
+    async getChangelog(id) {
+      return find(id)?.changelog ?? []
+    },
     async searchApis(query) {
       const q = query.trim().toLowerCase()
       if (!q) return []

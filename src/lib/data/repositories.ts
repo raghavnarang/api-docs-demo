@@ -5,6 +5,7 @@ import type {
   ApiSearchHit,
   ApiStatus,
   ApiSummary,
+  ChangelogEntry,
   CreateApiKeyInput,
   CreatedApiKey,
   ErrorRefEntry,
@@ -29,6 +30,8 @@ export interface ApiCatalogRepository {
   getDocs(id: string): Promise<string | null>
   /** Error reference catalogue. */
   getErrorReference(id: string): Promise<ErrorRefEntry[]>
+  /** Versioned changelog entries (§2.7), newest-first. Empty for an unknown id. */
+  getChangelog(id: string): Promise<ChangelogEntry[]>
   /**
    * Tier-2 cross-API full-text search (§2.2): which APIs contain the keyword
    * across endpoints, descriptions, and parameters. Id-agnostic — anchor ids are

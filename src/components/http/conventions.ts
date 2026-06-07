@@ -4,7 +4,7 @@
  * status colours stay consistent everywhere they appear (docs now, sandbox later).
  */
 
-import type { ApiHealth } from '../../lib/data/types'
+import type { ApiHealth, ChangelogType } from '../../lib/data/types'
 
 type BadgeClasses = string
 
@@ -53,6 +53,20 @@ export function healthColor(health: ApiHealth): BadgeClasses {
       return PALETTE.amber
     case 'outage':
       return PALETTE.red
+    default:
+      return PALETTE.slate
+  }
+}
+
+/** Changelog entry type (§2.7): breaking = red, feature = green, fix = blue. */
+export function changelogTypeColor(type: ChangelogType): BadgeClasses {
+  switch (type) {
+    case 'breaking':
+      return PALETTE.red
+    case 'feature':
+      return PALETTE.green
+    case 'fix':
+      return PALETTE.blue
     default:
       return PALETTE.slate
   }
