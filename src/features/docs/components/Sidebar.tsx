@@ -1,6 +1,12 @@
 import { useMemo } from 'react'
 import { Link, useMatchRoute } from '@tanstack/react-router'
-import { Activity, BarChart3, KeyRound, TerminalSquare } from 'lucide-react'
+import {
+  Activity,
+  BarChart3,
+  KeyRound,
+  ScrollText,
+  TerminalSquare,
+} from 'lucide-react'
 import {
   useApi,
   useApiDocs,
@@ -192,6 +198,16 @@ export function Sidebar() {
             >
               <Activity className="h-4 w-4" aria-hidden />
               API Status
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/changelog"
+              className="flex items-center gap-2 rounded px-2 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+              activeProps={{ className: 'bg-slate-100 text-slate-900' }}
+            >
+              <ScrollText className="h-4 w-4" aria-hidden />
+              Changelog
             </Link>
           </li>
         </ul>

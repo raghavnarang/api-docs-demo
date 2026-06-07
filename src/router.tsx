@@ -10,6 +10,7 @@ import { keysRoute } from './routes/keys'
 import { sandboxRoute } from './routes/sandbox'
 import { analyticsRoute } from './routes/analytics'
 import { statusIndexRoute, statusApiRoute } from './routes/status'
+import { changelogRoute } from './routes/changelog'
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
@@ -19,6 +20,7 @@ const routeTree = rootRoute.addChildren([
     apiDocsRoute,
     statusIndexRoute,
     statusApiRoute,
+    changelogRoute,
     authenticatedRoute.addChildren([keysRoute, sandboxRoute, analyticsRoute]),
   ]),
 ])
