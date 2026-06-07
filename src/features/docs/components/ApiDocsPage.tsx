@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
-import { Activity } from 'lucide-react'
+import { Activity, ScrollText } from 'lucide-react'
 import { useApi, useApiEndpoints } from '../hooks/use-catalog'
 import { DOCS_BOTTOM_SENTINEL_ID, useScrollSpy } from '../hooks/use-scroll-spy'
 import { useDocsUiStore } from '../store'
@@ -55,14 +55,24 @@ export function ApiDocsPage({ apiId }: { apiId: string }) {
                   v{detail.version}
                 </span>
               </div>
-              <Link
-                to="/status/$apiId"
-                params={{ apiId }}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
-              >
-                <Activity className="h-3.5 w-3.5" aria-hidden />
-                View status
-              </Link>
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
+                <Link
+                  to="/changelog"
+                  search={{ api: apiId }}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                >
+                  <ScrollText className="h-3.5 w-3.5" aria-hidden />
+                  View changelog
+                </Link>
+                <Link
+                  to="/status/$apiId"
+                  params={{ apiId }}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                >
+                  <Activity className="h-3.5 w-3.5" aria-hidden />
+                  View status
+                </Link>
+              </div>
             </div>
             {detail.description ? (
               <p className="mt-2 text-slate-600">{detail.description}</p>
