@@ -1,3 +1,4 @@
+import { Badge } from '../../../components/Badge'
 import type { ApiKeyEnvironment } from '../../../lib/data/types'
 
 /** Coloured pill for a key's environment: sandbox (slate) vs production (amber). */
@@ -12,10 +13,8 @@ export function EnvironmentBadge({
   environment: ApiKeyEnvironment
 }) {
   return (
-    <span
-      className={`inline-flex justify-center rounded px-2 py-0.5 text-xs font-semibold capitalize ${styles[environment]}`}
-    >
+    <Badge tone={styles[environment]} className="capitalize">
       {environment}
-    </span>
+    </Badge>
   )
 }

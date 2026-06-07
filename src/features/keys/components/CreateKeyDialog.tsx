@@ -2,6 +2,7 @@ import { useId, useState, type FormEvent } from 'react'
 import { Modal } from '../../../components/Modal'
 import { Button } from '../../../components/Button'
 import { Input } from '../../../components/Input'
+import { Select } from '../../../components/Select'
 import { ErrorState } from '../../../components/ErrorState'
 import type {
   ApiKeyEnvironment,
@@ -80,25 +81,15 @@ export function CreateKeyDialog({
           autoFocus
         />
 
-        <div className="flex flex-col gap-1">
-          <label
-            htmlFor={envId}
-            className="text-sm font-medium text-slate-700"
-          >
-            Environment
-          </label>
-          <select
-            id={envId}
-            value={environment}
-            onChange={(e) =>
-              setEnvironment(e.target.value as ApiKeyEnvironment)
-            }
-            className="rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-          >
-            <option value="sandbox">Sandbox</option>
-            <option value="production">Production</option>
-          </select>
-        </div>
+        <Select
+          id={envId}
+          label="Environment"
+          value={environment}
+          onChange={(e) => setEnvironment(e.target.value as ApiKeyEnvironment)}
+        >
+          <option value="sandbox">Sandbox</option>
+          <option value="production">Production</option>
+        </Select>
 
         <Input
           id={expiryId}

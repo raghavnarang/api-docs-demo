@@ -1,3 +1,4 @@
+import { Badge } from './Badge'
 import { statusColor } from './http/conventions'
 
 /**
@@ -6,10 +7,8 @@ import { statusColor } from './http/conventions'
  */
 export function StatusBadge({ status }: { status: string | number }) {
   return (
-    <span
-      className={`inline-flex justify-center rounded px-2 py-0.5 font-mono text-xs font-semibold ${statusColor(status)}`}
-    >
+    <Badge mono tone={statusColor(status)}>
       {status}
-    </span>
+    </Badge>
   )
 }

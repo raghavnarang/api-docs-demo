@@ -11,6 +11,17 @@ const variantClasses: Record<Variant, string> = {
   danger: 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500',
 }
 
+const baseClasses =
+  'inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-60'
+
+/**
+ * Button class string for a variant — reuse when a non-`<button>` element
+ * (e.g. a router `<Link>`) needs to look like a button.
+ */
+export function buttonClasses(variant: Variant = 'primary', className = '') {
+  return `${baseClasses} ${variantClasses[variant]} ${className}`
+}
+
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant
   /** Shows a spinner and disables the button while an action is in flight. */
@@ -30,7 +41,7 @@ export function Button({
     <button
       {...props}
       disabled={disabled || loading}
-      className={`inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-60 ${variantClasses[variant]} ${className}`}
+      className={buttonClasses(variant, className)}
     >
       {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
       {children}

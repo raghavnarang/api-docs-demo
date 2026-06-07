@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { LogOut } from 'lucide-react'
 import { useAuth } from '../../../lib/auth/auth-context'
-import { Button } from '../../../components/Button'
+import { Button, buttonClasses } from '../../../components/Button'
 
 /**
  * Header auth control: a "Sign in" link when signed out, or the current user's
@@ -16,10 +16,7 @@ export function UserMenu() {
 
   if (!session) {
     return (
-      <Link
-        to="/login"
-        className="inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-      >
+      <Link to="/login" className={buttonClasses('primary')}>
         Sign in
       </Link>
     )
@@ -37,7 +34,7 @@ export function UserMenu() {
 
   return (
     <div className="flex items-center gap-3">
-      <span className="hidden max-w-[12rem] truncate text-sm text-slate-600 sm:inline">
+      <span className="hidden max-w-48 truncate text-sm text-slate-600 sm:inline">
         {session.user.email}
       </span>
       <Button

@@ -1,4 +1,5 @@
 import type { ApiKey } from '../../../lib/data/types'
+import { Badge } from '../../../components/Badge'
 import { Button } from '../../../components/Button'
 import { EnvironmentBadge } from './EnvironmentBadge'
 
@@ -110,11 +111,5 @@ function StatusPill({
   tone: keyof typeof toneClasses
   children: string
 }) {
-  return (
-    <span
-      className={`inline-flex justify-center rounded px-2 py-0.5 text-xs font-semibold ${toneClasses[tone]}`}
-    >
-      {children}
-    </span>
-  )
+  return <Badge tone={toneClasses[tone]}>{children}</Badge>
 }

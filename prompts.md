@@ -423,3 +423,27 @@ More info in prompts.md and plan folder. attaching pdf for full project context"
 - **Prompt:** "log prompts, commit and push"
 - **Outcome:** Saved plan revisions v10/v11, logged entries 050–053, committed the feature as atomic Conventional Commits and pushed to `main`. Left the unrelated pre-existing `UserMenu.tsx` change untouched.
 
+### Entry 054
+- **Tool:** Claude Opus 4.8
+- **Goal:** Scan project for duplicated primitive components and find reuse opportunities
+- **Prompt:** "Can we scan over whole project and find which primitive components are duplicated and replaced with already available? eg: I found the selected lines can use badge that we have used at several places. same for other components eg: input, select, Buttons or any which can be reused"
+- **Outcome:** Scanned all 89 tsx files. Found: (1) no generic Badge primitive — 6 sites (`ChangelogEntryCard`, `EnvironmentBadge`, `KeyList.StatusPill`, `StatusBadge`, `MethodBadge`, `HealthBadge`) all hand-rolling `inline-flex rounded px-2 py-0.5 text-xs font-semibold` + color map; (2) no Select primitive — 4 raw `<select>` sites (`ChangelogApiPicker`, `EndpointSelector`, `CreateKeyDialog`, `UsageAnalyticsPage`) with divergent border/padding; (3) Button well-adopted but `UserMenu` Sign-in `<Link>` hand-rolls primary variant classes. Input raw usages (search box, table cells, checkbox) are custom-shape — not candidates. Proposed all 3 fixes.
+
+### Entry 055
+- **Tool:** Claude Opus 4.8
+- **Goal:** Implement all three deduplication fixes
+- **Prompt:** "all"
+- **Outcome:** Created `Badge` primitive (`tone`, `shape` rounded/pill, `mono` flag) and refactored 6 sites to wrap it. Created `Select` primitive (label + orientation, mirrors `Input`) and refactored 4 sites. Extracted `buttonClasses()` helper from `Button` and replaced `UserMenu` Sign-in `<Link>` hand-rolled classes. Typecheck clean, 158 tests pass.
+
+### Entry 056
+- **Tool:** Claude Opus 4.8
+- **Goal:** Log prompts, commit, push
+- **Prompt:** "log prompts + commit + push"
+- **Outcome:** Started logging entries 054–057; interrupted, resumed on "continue".
+
+### Entry 057
+- **Tool:** Claude Opus 4.8
+- **Goal:** Resume log + commit + push
+- **Prompt:** "continue"
+- **Outcome:** Appended entries 054–057 to prompts.md, committed the refactor as a single Conventional Commit, and pushed to `main`.
+

@@ -1,3 +1,4 @@
+import { Select } from '../../../components/Select'
 import { useApis, useApiEndpoints } from '../../docs/hooks/use-catalog'
 
 /**
@@ -21,42 +22,37 @@ export function EndpointSelector({
 
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-slate-700">API</span>
-        <select
-          value={apiId ?? ''}
-          onChange={(e) => onApiChange(e.target.value)}
-          className="rounded-md border border-slate-300 px-2 py-2 text-sm"
-        >
-          <option value="" disabled>
-            Select an API…
+      <Select
+        label="API"
+        value={apiId ?? ''}
+        onChange={(e) => onApiChange(e.target.value)}
+      >
+        <option value="" disabled>
+          Select an API…
+        </option>
+        {(apis.data ?? []).map((api) => (
+          <option key={api.id} value={api.id}>
+            {api.name}
           </option>
-          {(apis.data ?? []).map((api) => (
-            <option key={api.id} value={api.id}>
-              {api.name}
-            </option>
-          ))}
-        </select>
-      </label>
+        ))}
+      </Select>
 
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-slate-700">Endpoint</span>
-        <select
-          value={endpointId ?? ''}
-          onChange={(e) => onEndpointChange(e.target.value)}
-          disabled={!apiId || endpoints.isPending}
-          className="rounded-md border border-slate-300 px-2 py-2 font-mono text-xs disabled:bg-slate-50 disabled:text-slate-400"
-        >
-          <option value="" disabled>
-            {apiId ? 'Select an endpoint…' : 'Select an API first'}
+      <Select
+        label="Endpoint"
+        value={endpointId ?? ''}
+        onChange={(e) => onEndpointChange(e.target.value)}
+        disabled={!apiId || endpoints.isPending}
+        className="font-mono"
+      >
+        <option value="" disabled>
+          {apiId ? 'Select an endpoint…' : 'Select an API first'}
+        </option>
+        {(endpoints.data ?? []).map((endpoint) => (
+          <option key={endpoint.id} value={endpoint.id}>
+            {endpoint.method.toUpperCase()} {endpoint.path}
           </option>
-          {(endpoints.data ?? []).map((endpoint) => (
-            <option key={endpoint.id} value={endpoint.id}>
-              {endpoint.method.toUpperCase()} {endpoint.path}
-            </option>
-          ))}
-        </select>
-      </label>
+        ))}
+      </Select>
     </div>
   )
 }

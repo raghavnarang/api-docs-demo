@@ -4,6 +4,7 @@ import { BarChart3 } from 'lucide-react'
 import { EmptyState } from '../../../components/EmptyState'
 import { ErrorState } from '../../../components/ErrorState'
 import { QueryBoundary } from '../../../components/QueryBoundary'
+import { Select } from '../../../components/Select'
 import { SkeletonLines } from '../../../components/Skeleton'
 import type { UsageWindow } from '../../../lib/data/types'
 import { useApiKeys } from '../../keys/hooks/use-api-keys'
@@ -105,20 +106,18 @@ export function UsageAnalyticsPage() {
         ) : (
           <>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <label className="flex items-center gap-2 text-sm text-slate-600">
-                <span className="font-medium">Key</span>
-                <select
-                  value={activeKeyId}
-                  onChange={(e) => setSelectedKeyId(e.target.value)}
-                  className="rounded-md border border-slate-300 px-2 py-1 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                >
-                  {keys.map((key) => (
-                    <option key={key.id} value={key.id}>
-                      {key.name} ({key.environment})
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <Select
+                label="Key"
+                orientation="horizontal"
+                value={activeKeyId}
+                onChange={(e) => setSelectedKeyId(e.target.value)}
+              >
+                {keys.map((key) => (
+                  <option key={key.id} value={key.id}>
+                    {key.name} ({key.environment})
+                  </option>
+                ))}
+              </Select>
               <WindowToggle value={window} onChange={setWindow} />
             </div>
 

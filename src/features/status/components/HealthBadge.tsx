@@ -1,3 +1,4 @@
+import { Badge } from '../../../components/Badge'
 import { healthColor } from '../../../components/http/conventions'
 import type { ApiHealth } from '../../../lib/data/types'
 
@@ -10,14 +11,9 @@ const LABEL: Record<ApiHealth, string> = {
 /** Coloured per-API health pill (§2.6) using the shared colour convention. */
 export function HealthBadge({ health }: { health: ApiHealth }) {
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${healthColor(health)}`}
-    >
-      <span
-        className="h-1.5 w-1.5 rounded-full bg-current"
-        aria-hidden
-      />
+    <Badge shape="pill" tone={healthColor(health)} className="gap-1.5">
+      <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
       {LABEL[health]}
-    </span>
+    </Badge>
   )
 }

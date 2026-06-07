@@ -1,3 +1,4 @@
+import { Badge } from '../../../components/Badge'
 import { changelogTypeColor } from '../../../components/http/conventions'
 import type { ChangelogEntry } from '../../../lib/data/types'
 
@@ -24,13 +25,9 @@ export function ChangelogEntryCard({ entry }: { entry: ChangelogEntry }) {
   return (
     <article className="rounded-lg border border-slate-200 p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <span
-          className={`inline-flex rounded px-2 py-0.5 text-xs font-semibold ${changelogTypeColor(
-            entry.type,
-          )}`}
-        >
+        <Badge tone={changelogTypeColor(entry.type)}>
           {TYPE_LABELS[entry.type]}
-        </span>
+        </Badge>
         <span className="font-mono text-xs text-slate-500">
           v{entry.version}
         </span>
